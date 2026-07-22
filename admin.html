@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت مرکزی | آوای یقین</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --gold: #d4af37;
+            --gold-light: #f5df91;
+            --green: #0b3d2e;
+            --green-light: #145c43;
+            --border: rgba(255, 255, 255, 0.12);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Vazirmatn", sans-serif;
+            background: radial-gradient(circle at top, #113628, #040d0a 80%);
+            color: #f5f5f5; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(25px); border: 1px solid var(--border);
+        }
+        .admin-input {
+            width: 100%; padding: 14px 16px; border-radius: 14px;
+            background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white; font-family: inherit; outline: none; transition: 0.3s; font-size: 13px;
+        }
+        .admin-input:focus { border-color: var(--gold); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+        .admin-nav-btn {
+            display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px;
+            border-radius: 12px; font-size: 13px; font-weight: 700; color: #94a3b8; transition: 0.25s; cursor: pointer;
+            white-space: nowrap;
+        }
+        .admin-nav-btn:hover { background: rgba(255,255,255,0.06); color: white; }
+        .admin-nav-btn.active {
+            background: linear-gradient(to right, rgba(6, 78, 59, 0.85), rgba(180, 83, 9, 0.35));
+            border: 1px solid rgba(251, 191, 36, 0.45); color: #fcd34d;
+        }
+        #toastContainer { position: fixed; top: 20px; left: 20px; z-index: 20000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast {
+            background: rgba(11, 61, 46, 0.95); border: 1px solid var(--gold); color: var(--gold-light);
+            padding: 12px 22px; border-radius: 16px; font-size: 13px; font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeInOut 3.2s forwards;
+        }
+        @keyframes fadeInOut { 0%{opacity:0;transform:translateY(-20px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-20px)} }
+
+        @media(max-width: 768px) {
+            .admin-layout { flex-direction: column; padding: 10px; gap: 15px; }
+            .admin-sidebar { width: 100% !important; overflow-x: auto; display: flex !important; flex-direction: row !important; padding: 10px; gap: 8px; }
+            .admin-nav-btn { width: auto !important; padding: 10px 14px; font-size: 12px; }
+            .header-title-box { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toastContainer"></div>
+
+    <header class="p-4 sm:px-8 bg-slate-950/90 border-b border-amber-400/30 flex items-center justify-between shadow-xl">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-400/10 border border-amber-400/40 flex items-center justify-center text-amber-300 text-lg sm:text-xl">
+                <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-amber-300 text-sm sm:text-lg">پنل مدیریت مرکزی ابری</h1>
+                <p class="text-[11px] text-emerald-200 header-title-box">کنترل زنده و ابری چت‌ها و کاربران کلودفلر</p>
+            </div>
+        </div>
+        <a href="index.html" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 hover:bg-emerald-800 hover:text-white transition text-xs font-bold flex items-center gap-2">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>بازگشت به چت</span>
+        </a>
+    </header>
+
+    <div class="admin-layout flex flex-1 p-4 sm:p-6 gap-6 max-w-[1400px] mx-auto w-full">
+        <div class="admin-sidebar w-full sm:w-72 bg-slate-950/80 glass-panel rounded-2xl sm:rounded-3xl p-3 sm:p-4 flex flex-col gap-2 shrink-0 h-fit">
+            <button id="adminTabStats" class="admin-nav-btn active"><i class="fa-solid fa-chart-line text-amber-400"></i><span>داشبورد و آمار</span></button>
+            <button id="adminTabChats" class="admin-nav-btn"><i class="fa-solid fa-comments text-emerald-400"></i><span>نظارت بر چت‌ها</span></button>
+            <button id="adminTabUsers" class="admin-nav-btn"><i class="fa-solid fa-user-shield text-sky-400"></i><span>مدیریت کاربران</span></button>
+            <button id="adminTabSecurity" class="admin-nav-btn"><i class="fa-solid fa-shield-halved text-rose-400"></i><span>امنیت و رمز</span></button>
+        </div>
+
+        <div class="flex-1 glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-6 text-right overflow-hidden">
+            <!-- تب آمار -->
+            <div id="panelStats" class="space-y-6">
+                <h3 class="text-sm sm:text-base font-bold text-amber-300 border-b border-white/10 pb-3">آمار ابری سامانه</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-emerald-500/30 flex items-center justify-between">
+                        <div><p class="text-xs text-emerald-200 mb-1 font-medium">کل کاربران ابری</p><h3 id="statTotalUsers" class="text-2xl sm:text-3xl font-black text-amber-300">0</h3></div>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 text-lg"><i class="fa-solid fa-user-check"></i></div>
+                    </div>
+                    <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-amber-500/30 flex items-center justify-between">
+                        <div><p class="text-xs text-amber-200 mb-1 font-medium">مجموع مکالمات ابری</p><h3 id="statTotalMessages" class="text-2xl sm:text-3xl font-black text-amber-300">0</h3></div>
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-lg"><i class="fa-solid fa-comments"></i></div>
+                    </div>
+                    <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-rose-500/30 flex items-center justify-between">
+                        <div><p class="text-xs text-rose-200 mb-1 font-medium">کاربران مسدود شده</p><h3 id="statBlockedUsers" class="text-2xl sm:text-3xl font-black text-rose-400">0</h3></div>
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 text-lg"><i class="fa-solid fa-ban"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تب نظارت بر چت‌ها -->
+            <div id="panelChats" class="hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                    <h3 class="text-sm sm:text-base font-bold text-amber-300">تاریخچه زنده مکالمات ابری</h3>
+                    <button onclick="fetchAdminData()" class="px-3 py-1.5 bg-slate-800 text-xs text-amber-300 rounded-xl"><i class="fa-solid fa-rotate"></i> بروزرسانی</button>
+                </div>
+                <div id="chatLogsContainer" class="space-y-3 text-xs max-h-[450px] overflow-y-auto"></div>
+            </div>
+
+            <!-- تب مدیریت کاربران -->
+            <div id="panelUsers" class="hidden space-y-4">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                    <h3 class="text-sm sm:text-base font-bold text-amber-300">مدیریت و مسدودی کاربران ابری</h3>
+                    <button onclick="fetchAdminData()" class="px-3 py-1.5 bg-slate-800 text-xs text-amber-300 rounded-xl"><i class="fa-solid fa-rotate"></i> بروزرسانی</button>
+                </div>
+                <div id="usersManagementContainer" class="space-y-3 text-xs max-h-[450px] overflow-y-auto"></div>
+            </div>
+
+            <!-- تب امنیت -->
+            <div id="panelSecurity" class="hidden space-y-4">
+                <h3 class="text-sm sm:text-base font-bold text-amber-300 border-b border-white/10 pb-3">امنیت و تغییر رمز عبور مدیریت</h3>
+                <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-rose-500/30 space-y-4 max-w-md">
+                    <label class="block text-xs font-bold text-rose-300">رمز عبور جدید پنل مدیریت</label>
+                    <input type="text" id="adminNewPasscode" placeholder="حداقل ۶ کاراکتر..." class="admin-input">
+                    <button id="savePasscodeBtn" class="py-3 px-5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs cursor-pointer">بروزرسانی رمز مدیریت</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalData = { users: [], logs: [], blocked: [] };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const tabs = ['Stats', 'Chats', 'Users', 'Security'];
+            tabs.forEach(tab => {
+                const btn = document.getElementById(`adminTab${tab}`);
+                const panel = document.getElementById(`panel${tab}`);
+                if (btn && panel) {
+                    btn.addEventListener("click", () => {
+                        tabs.forEach(t => {
+                            document.getElementById(`adminTab${t}`)?.classList.remove("active");
+                            document.getElementById(`panel${t}`)?.classList.add("hidden");
+                        });
+                        btn.classList.add("active");
+                        panel.classList.remove("hidden");
+                    });
+                }
+            });
+
+            fetchAdminData();
+
+            document.getElementById("savePasscodeBtn")?.addEventListener("click", () => {
+                const newPass = document.getElementById("adminNewPasscode").value.trim();
+                if (newPass.length >= 6) {
+                    localStorage.setItem("avaye_admin_pass", newPass);
+                    showToast("رمز عبور مدیریت با موفقیت تغییر کرد!");
+                    document.getElementById("adminNewPasscode").value = "";
+                } else {
+                    showToast("رمز عبور باید حداقل ۶ کاراکتر باشد.");
+                }
+            });
+        });
+
+        async function fetchAdminData() {
+            try {
+                const res = await fetch("/api/admin/data");
+                globalData = await res.json();
+                renderAdminUI();
+                showToast("اطلاعات ابری بروزرسانی شد.");
+            } catch (err) {
+                showToast("خطا در دریافت اطلاعات از کلودفلر.");
+            }
+        }
+
+        function renderAdminUI() {
+            const { users, logs, blocked } = globalData;
+
+            document.getElementById("statTotalUsers").innerText = users.length;
+            document.getElementById("statTotalMessages").innerText = logs.length;
+            document.getElementById("statBlockedUsers").innerText = blocked.length;
+
+            // رندر کاربران
+            const userContainer = document.getElementById("usersManagementContainer");
+            if (users.length === 0) {
+                userContainer.innerHTML = `<p class="text-slate-400 p-2">هیچ کاربری ثبت‌نام نکرده است.</p>`;
+            } else {
+                userContainer.innerHTML = users.map(u => {
+                    const isBlocked = blocked.includes(u.phone);
+                    return `
+                        <div class="p-3.5 bg-white/5 rounded-2xl flex items-center justify-between border border-white/10 gap-3">
+                            <div>
+                                <p class="font-bold text-amber-300 text-xs sm:text-sm">${u.name}</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5" dir="ltr">موبایل: ${u.phone} (${u.time || ''})</p>
+                            </div>
+                            <div>
+                                <button onclick="toggleBlockUser('${u.phone}')" class="px-3 py-1.5 rounded-xl text-[11px] font-bold transition ${isBlocked ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-rose-600 hover:bg-rose-500 text-white'}">
+                                    ${isBlocked ? 'رفع مسدودی' : 'مسدود کردن'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // رندر لاگ چت‌ها
+            const logContainer = document.getElementById("chatLogsContainer");
+            if (logs.length === 0) {
+                logContainer.innerHTML = `<p class="text-slate-400 p-3">مکالمه‌ای ثبت نشده است.</p>`;
+            } else {
+                logContainer.innerHTML = logs.map(log => `
+                    <div class="p-3 bg-white/5 rounded-2xl border border-white/10 space-y-1.5">
+                        <div class="flex justify-between text-[11px] text-emerald-300 font-bold">
+                            <span><i class="fa-solid fa-user ml-1"></i> ${log.userName} (${log.userPhone})</span>
+                            <span class="text-slate-400 font-mono">${log.time}</span>
+                        </div>
+                        <div class="p-2 bg-black/30 rounded-xl text-slate-200 text-xs"><strong>پرسش:</strong> ${log.question}</div>
+                        <div class="p-2 bg-emerald-950/40 rounded-xl text-emerald-200 text-xs border border-emerald-500/20"><strong>پاسخ:</strong> ${log.reply}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function toggleBlockUser(phone) {
+            try {
+                const res = await fetch("/api/admin/block", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json();
+                globalData.blocked = data.blocked;
+                renderAdminUI();
+                showToast("وضعیت کاربر بروز شد.");
+            } catch (err) {
+                showToast("خطا در اعمال تغییرات.");
+            }
+        }
+
+        function showToast(message) {
+            const container = document.getElementById("toastContainer");
+            if (!container) return;
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+name = "avaye-yaghin"
+compatibility_date = "2026-07-22"
+
+[vars]
+# اگر خواستی می‌تونی کلید Groq رو اینجا هم به عنوان متغیر پیش‌فرض بذاری
+# GROQ_API_KEY = "ک"
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "AVAYE_KV"
+id = "a4a9f428b15e40ecafeb5d17aa811c3a"
