@@ -1,5 +1,5 @@
 {
-  "name": "aaaaaaaaaaa",
+  "name": "211",
   "main": "_worker.js",
   "compatibility_date": "2026-07-22",
   "compatibility_flags": [
@@ -11,7 +11,7 @@
   "kv_namespaces": [
     {
       "binding": "AVAYE_YAGHIN_KV",
-      "id": "a4a9f428b15e40ecafeb5d17aa811c3a"
+      "id": "4335153d80d449338c474f07c618ed30"
     }
   ]
 }
