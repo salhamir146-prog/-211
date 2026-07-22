@@ -56,7 +56,7 @@
             position: fixed; inset: 0;
             display: flex; justify-content: center; align-items: center;
             background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(30px);
-            z-index: 9999; padding: 20px;
+            z-index: 99999; padding: 20px;
         }
 
         .registration-box {
@@ -79,10 +79,10 @@
             width: 330px; background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(35px); border: 1px solid var(--border);
             border-radius: 32px; display: flex; flex-direction: column; overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35); transition: transform 0.4s ease;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35); transition: transform 0.35s ease;
         }
 
-        .sidebar-header { padding: 28px 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+        .sidebar-header { padding: 28px 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.06); position: relative; }
         .logo-icon {
             width: 80px; height: 80px; margin: auto; display: flex; align-items: center; justify-content: center;
             font-size: 38px; border-radius: 25px; background: linear-gradient(135deg, var(--green-light), var(--gold));
@@ -168,10 +168,31 @@
         }
         @keyframes fadeInOut { 0%{opacity:0;transform:translateY(-20px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-20px)} }
 
+        /* حل مشکل موبایل بدون لایه تاری نابجا */
         @media(max-width: 900px) {
             .app-container { padding: 10px; }
-            .sidebar { position: fixed; right: 15px; top: 15px; bottom: 15px; transform: translateX(120%); z-index: 1000; width: 290px; }
-            .sidebar.active { transform: translateX(0); }
+            
+            /* سایدبار روی موبایل */
+            .sidebar { 
+                position: fixed !important; 
+                right: 0 !important; 
+                top: 0 !important; 
+                bottom: 0 !important; 
+                height: 100vh !important;
+                width: 290px !important;
+                z-index: 99999 !important; 
+                transform: translateX(110%) !important; 
+                border-radius: 24px 0 0 24px !important; 
+                background: #0b3325 !important;
+                box-shadow: -10px 0 50px rgba(0,0,0,0.95) !important;
+                transition: transform 0.3s ease-in-out !important;
+            }
+            
+            /* وقتی باز میشه */
+            .sidebar.mobile-open { 
+                transform: translateX(0) !important; 
+            }
+            
             .suggestion-cards { grid-template-columns: 1fr; }
         }
     </style>
@@ -189,7 +210,7 @@
             <form id="onboardingForm" class="space-y-4 text-right">
                 <div>
                     <label class="block text-xs text-emerald-200 mb-1.5 font-medium">نام و نام خانوادگی</label>
-                    <input type="text" id="userNameInput" required placeholder="مثال: امیر صالح" class="reg-input text-sm">
+                    <input type="text" id="userNameInput" required placeholder="مثال: علی احمدی" class="reg-input text-sm">
                 </div>
                 <div>
                     <label class="block text-xs text-emerald-200 mb-1.5 font-medium">شماره همراه</label>
@@ -205,6 +226,10 @@
     <div class="app-container">
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
+                <!-- دکمه بستن (ضربدر) -->
+                <button onclick="closeSidebarDirectly()" class="sm:hidden absolute left-4 top-4 text-slate-300 hover:text-white text-2xl p-2 cursor-pointer z-50">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
                 <div class="logo-icon"><i class="fa-solid fa-kaaba text-amber-300"></i></div>
                 <h1 class="text-xl font-black mt-3 bg-gradient-to-r from-white to-amber-300 bg-clip-text text-transparent">آوای یقین</h1>
                 <p class="text-[11px] text-emerald-200 mt-1">مسجد حضرت ابوالفضل (ع)</p>
@@ -227,8 +252,8 @@
         <main class="main-area">
             <header class="top-bar">
                 <div class="flex items-center gap-3">
-                    <button id="menuToggle" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex sm:hidden items-center justify-center cursor-pointer">
-                        <i class="fa-solid fa-bars"></i>
+                    <button type="button" id="customMenuBtn" onclick="openSidebarDirectly()" class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-white flex sm:hidden items-center justify-center cursor-pointer z-40">
+                        <i class="fa-solid fa-bars text-lg"></i>
                     </button>
                 </div>
                 <div class="text-xs text-emerald-300 font-medium hidden sm:block">
@@ -267,6 +292,22 @@
         </main>
     </div>
 
+    <!-- اسکریپت ایزوله و مستقل برای باز و بسته شدن سایدبار در موبایل -->
+    <script>
+        function openSidebarDirectly() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.add('mobile-open');
+            }
+        }
+
+        function closeSidebarDirectly() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('mobile-open');
+            }
+        }
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
