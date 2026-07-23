@@ -1,6 +1,7 @@
 let currentUser = null;
 let isImageMode = false;
 let botSettings = { voiceGender: 'female', voiceSpeed: '1' };
+let currentAudio = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     initApp();
@@ -44,13 +45,11 @@ function initApp() {
     checkUserSession();
 }
 
-// 🔧 اصلاح مسیر دریافت تنظیمات (تغییر /api/config به /api/settings جهت رفع 404)
 async function loadConfig() {
     try {
-        const res = await fetch('/api/settings');
+        const res = await fetch('/api/config');
         if (res.ok) {
-            const data = await res.json();
-            botSettings = { ...botSettings, ...data };
+            botSettings = await res.json();
             const imgBtn = document.getElementById('imageModeBtn');
             if (imgBtn) {
                 if (botSettings.imageGenEnabled) {
@@ -146,7 +145,7 @@ async function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // 🔑 بررسی رمز ورود مدیریت
+    // 🔑 بررسی ارسال رمز عبور مدیریت برای ورود مستقیم به پنل
     const ADMIN_PASS = "AhuiaJAKXJMPLDKS1221141154F..";
     if (text === ADMIN_PASS) {
         chatInput.value = '';
@@ -166,7 +165,7 @@ async function sendMessage() {
     appendMessage(text, 'user');
     chatInput.value = '';
 
-    const botMessageElement = appendMessage('در حال بررسی و پاسخگویی... ⏳', 'ai');
+    const botMessageElement = appendMessage('در حال تفکر...', 'ai');
 
     try {
         const res = await fetch('/api/chat', {
@@ -200,8 +199,8 @@ async function sendMessage() {
             const reply = data.reply || 'پاسخی یافت نشد.';
             contentBox.innerHTML = `
                 <div>${escapeHtml(reply)}</div>
-                <button onclick="speakText(this, \`${escapeJs(reply)}\`)" style="margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #f5df91; p-padding: 4px 10px; border-radius: 10px; font-size: 11px; cursor: pointer;">
-                    🔊 پخش صوتی
+                <button onclick="speakText(this, \`${escapeJs(reply)}\`)" style="margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #f5df91; padding: 4px 10px; border-radius: 10px; font-size: 11px; cursor: pointer;">
+                    🔊 پخش پاسخ
                 </button>
             `;
         }
@@ -245,64 +244,34 @@ function toggleImageMode() {
 
     if (isImageMode) {
         if (btn) btn.style.background = 'rgba(212, 175, 55, 0.3)';
-        if (input) input.placeholder = 'توصیف تصویر درخواستی خود را بنویسید... 🎨';
+        if (input) input.placeholder = 'تصویر درخواستی خود را بنویسید... 🎨';
         showToast('حالت ساخت تصویر فعال شد');
     } else {
         if (btn) btn.style.background = 'rgba(212, 175, 55, 0.1)';
-        if (input) input.placeholder = 'پرسش یا توصیف تصویر خود را وارد کنید...';
+        if (input) input.placeholder = 'پرسش خود را وارد کنید...';
         showToast('حالت متن فعال شد');
     }
 }
 
-// 🔊 اصلاح هوشمند سیستم پخش صوتی جهت اجرا روی تمام مرورگرها و کروم
 function speakText(btn, text) {
-    if (!text) return;
-
-    const cleanText = text
-        .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
-        .replace(/[*_#`~]/g, '')
-        .trim();
-
-    if (!cleanText) return;
-
-    // پشتیبانی اختصاصی ResponsiveVoice در صورت وجود
-    if (typeof responsiveVoice !== 'undefined') {
-        if (responsiveVoice.isPlaying()) {
-            responsiveVoice.cancel();
-            if (btn) btn.innerHTML = '🔊 پخش صوتی';
-            return;
-        }
-
-        if (btn) btn.innerHTML = '⏹️ توقف';
-        responsiveVoice.speak(cleanText, "Iranian Female", {
-            rate: parseFloat(botSettings.voiceSpeed || 1),
-            onend: () => { if (btn) btn.innerHTML = '🔊 پخش صوتی'; },
-            onerror: () => { if (btn) btn.innerHTML = '🔊 پخش صوتی'; }
-        });
+    if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        currentAudio = null;
+        btn.innerHTML = '🔊 پخش پاسخ';
         return;
     }
 
-    // مرورگر کروم و استاندارد SpeechSynthesis
-    if ('speechSynthesis' in window) {
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-            if (btn) btn.innerHTML = '🔊 پخش صوتی';
-            return;
-        }
+    const clean = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+    if (!clean) return;
 
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'fa-IR';
-        utterance.rate = parseFloat(botSettings.voiceSpeed || 1);
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean.substring(0, 300))}&tl=fa&client=tw-ob`;
+    currentAudio = new Audio(url);
+    currentAudio.playbackRate = parseFloat(botSettings.voiceSpeed || 1);
 
-        if (btn) btn.innerHTML = '⏹️ در حال پخش...';
+    btn.innerHTML = 'متأسفیم درحال حاظر این قابلیت برای شما فعال نیست.';
 
-        utterance.onend = () => { if (btn) btn.innerHTML = '🔊 پخش صوتی'; };
-        utterance.onerror = () => { if (btn) btn.innerHTML = '🔊 پخش صوتی'; };
-
-        window.speechSynthesis.speak(utterance);
-    } else {
-        showToast('مرورگر شما از قابلیت پخش صوتی پشتیبانی نمی‌کند.');
-    }
+    currentAudio.play().catch(() => { btn.innerHTML = '🔊 پخش پاسخ'; });
+    currentAudio.onended = () => { btn.innerHTML = '🔊 پخش پاسخ'; currentAudio = null; };
 }
 
 function showToast(message) {
