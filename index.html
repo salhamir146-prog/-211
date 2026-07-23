@@ -2,7 +2,8 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+    <meta name="theme-color" content="#06140f">
     <title>آوای یقین | سامانه جامع و هوشمند معارف اسلامی</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,15 +23,19 @@
             --text: #f5f5f5;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        html, body { height: 100%; }
 
         body {
             font-family: "Vazirmatn", sans-serif;
             background: radial-gradient(circle at top, #174d39, #06140f 70%);
             color: var(--text);
-            min-height: 100vh;
+            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             position: relative;
+            overscroll-behavior: none;
         }
 
         body::before {
@@ -69,11 +74,14 @@
         .reg-input {
             width: 100%; padding: 16px 20px; border-radius: 18px;
             background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white; font-family: inherit; outline: none; transition: 0.3s;
+            color: white; font-family: inherit; font-size: 16px; outline: none; transition: 0.3s;
         }
         .reg-input:focus { border-color: var(--gold); box-shadow: 0 0 25px rgba(212, 175, 55, 0.25); }
 
-        .app-container { display: flex; height: 100vh; padding: 20px; gap: 20px; position: relative; z-index: 10; }
+        .app-container {
+            display: flex; height: 100vh; height: 100dvh; padding: 20px; gap: 20px;
+            position: relative; z-index: 10;
+        }
 
         .sidebar {
             width: 330px; background: rgba(255, 255, 255, 0.03);
@@ -143,7 +151,7 @@
         }
         .chat-input {
             flex: 1; resize: none; max-height: 120px; background: transparent; border: none; outline: none;
-            color: white; font-family: inherit; font-size: 15px; padding: 10px;
+            color: white; font-family: inherit; font-size: 16px; padding: 10px;
         }
         .send-btn {
             width: 52px; height: 52px; border: none; border-radius: 50%;
@@ -160,7 +168,18 @@
         .message.user .message-content { background: linear-gradient(135deg, #145c43, #0b2d22); border-bottom-left-radius: 6px; }
         .message.ai .message-content { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); border-bottom-right-radius: 6px; }
 
-        #toastContainer { position: fixed; top: 20px; left: 20px; z-index: 20000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        #sidebarOverlay {
+            display: none; position: fixed; inset: 0; z-index: 99998;
+            background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(2px);
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        #sidebarOverlay.visible { display: block; opacity: 1; }
+
+        #toastContainer {
+            position: fixed; top: 20px; left: 20px; z-index: 20000;
+            display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+            max-width: calc(100vw - 40px);
+        }
         .toast {
             background: rgba(11, 61, 46, 0.95); border: 1px solid var(--gold); color: var(--gold-light);
             padding: 12px 22px; border-radius: 16px; font-size: 13px; font-weight: 700;
@@ -170,30 +189,73 @@
 
         /* حل مشکل موبایل بدون لایه تاری نابجا */
         @media(max-width: 900px) {
-            .app-container { padding: 10px; }
-            
+            .app-container { padding: 8px; gap: 8px; }
+
+            .main-area { border-radius: 22px; }
+
             /* سایدبار روی موبایل */
-            .sidebar { 
-                position: fixed !important; 
-                right: 0 !important; 
-                top: 0 !important; 
-                bottom: 0 !important; 
+            .sidebar {
+                position: fixed !important;
+                right: 0 !important;
+                top: 0 !important;
+                bottom: 0 !important;
                 height: 100vh !important;
+                height: 100dvh !important;
                 width: 290px !important;
-                z-index: 99999 !important; 
-                transform: translateX(110%) !important; 
-                border-radius: 24px 0 0 24px !important; 
+                max-width: 82vw !important;
+                z-index: 99999 !important;
+                transform: translateX(110%) !important;
+                border-radius: 24px 0 0 24px !important;
                 background: #0b3325 !important;
                 box-shadow: -10px 0 50px rgba(0,0,0,0.95) !important;
                 transition: transform 0.3s ease-in-out !important;
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
             }
-            
+
             /* وقتی باز میشه */
-            .sidebar.mobile-open { 
-                transform: translateX(0) !important; 
+            .sidebar.mobile-open {
+                transform: translateX(0) !important;
             }
-            
-            .suggestion-cards { grid-template-columns: 1fr; }
+
+            .registration-box { padding: 38px 24px; border-radius: 28px; }
+
+            .top-bar { height: 64px; padding: 0 16px; }
+
+            .chat-container { padding: 18px 14px 8px; }
+
+            .welcome-logo { width: 88px; height: 88px; font-size: 42px; border-radius: 28px; }
+            .welcome-screen h2 { font-size: 22px !important; padding: 0 10px; }
+            .welcome-screen p { padding: 0 16px; }
+
+            .suggestion-cards { grid-template-columns: 1fr; width: 100%; gap: 12px; margin-top: 28px; }
+            .suggestion-card { padding: 16px; text-align: right; }
+
+            .message-content { max-width: 88%; padding: 13px 16px; font-size: 14px; }
+
+            .input-container {
+                padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
+            }
+            .input-wrapper { padding: 8px 12px; gap: 8px; }
+
+            .send-btn { width: 46px; height: 46px; flex-shrink: 0; }
+
+            #customMenuBtn { width: 44px !important; height: 44px !important; }
+            #adminTriggerBtn { padding: 10px !important; }
+
+            #imageModeBtn span { display: none; }
+            #imageModeBtn { padding: 10px; }
+
+            #toastContainer { top: calc(14px + env(safe-area-inset-top)); left: 14px; right: 14px; max-width: none; }
+            .toast { width: 100%; text-align: center; }
+        }
+
+        /* گوشی‌های خیلی کوچک */
+        @media(max-width: 380px) {
+            .registration-box { padding: 34px 20px; border-radius: 26px; }
+            .logo-icon { width: 64px; height: 64px; font-size: 30px; border-radius: 20px; }
+            .welcome-screen h2 { font-size: 19px !important; }
+            .message-content { max-width: 92%; font-size: 13.5px; }
         }
     </style>
 </head>
@@ -222,6 +284,8 @@
             </form>
         </div>
     </div>
+
+    <div id="sidebarOverlay" onclick="closeSidebarDirectly()"></div>
 
     <div class="app-container">
         <aside id="sidebar" class="sidebar">
@@ -303,16 +367,16 @@
     <script>
         function openSidebarDirectly() {
             const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                sidebar.classList.add('mobile-open');
-            }
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.add('mobile-open');
+            if (overlay) overlay.classList.add('visible');
         }
 
         function closeSidebarDirectly() {
             const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                sidebar.classList.remove('mobile-open');
-            }
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar) sidebar.classList.remove('mobile-open');
+            if (overlay) overlay.classList.remove('visible');
         }
     </script>
     <script src="app.js"></script>
