@@ -208,7 +208,7 @@ export default {
         return new Response(JSON.stringify({ reply }), { headers: corsHeaders });
       }
 
-      // ۴. دریافت اطلاعات پنل ادمین (با چک کردن رمز)
+      // ۴. دریافت اطلاعات پنل ادمین
       if (path === "/api/admin/data" && request.method === "POST") {
         const { password } = await request.json();
         if (password !== ADMIN_PASSWORD) {
