@@ -16,7 +16,7 @@
       <h2 class="text-xl font-bold mb-4 text-emerald-400 text-center">🔐 ورود به پنل مدیریت آوای یقین</h2>
       <p class="text-xs text-slate-400 mb-4 text-center">لطفاً رمز عبور مدیریت را وارد کنید:</p>
       <input type="password" id="passcodeInput" placeholder="رمز عبور..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl mb-4 text-sm focus:outline-none focus:border-emerald-500">
-      <button onclick="checkPasscode()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold transition text-sm">تایید و ورود</button>
+      <button onclick="checkPasscode()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold transition text-sm cursor-pointer">تایید و ورود</button>
       <p id="authError" class="text-red-500 text-xs mt-3 text-center hidden">رمز عبور اشتباه است!</p>
     </div>
   </div>
@@ -28,7 +28,7 @@
         <h1 class="text-2xl font-bold text-emerald-400">⚡ پنل مدیریت هوشمند سامانه</h1>
         <p class="text-xs text-slate-400 mt-1">مدیریت کامل ربات، کاربران و گفتگوهای اختصاصی</p>
       </div>
-      <button onclick="location.reload()" class="mt-4 md:mt-0 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition">خروج / قفل مجدد</button>
+      <button onclick="location.reload()" class="mt-4 md:mt-0 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition cursor-pointer">خروج / قفل مجدد</button>
     </header>
 
     <!-- آمار سریع -->
@@ -53,10 +53,10 @@
 
     <!-- تب‌ها -->
     <div class="flex gap-2 mb-6 border-b border-slate-800 pb-3 overflow-x-auto">
-      <button onclick="switchTab('settings')" id="btn-settings" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition">تنظیمات و هوش مصنوعی</button>
-      <button onclick="switchTab('users')" id="btn-users" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition">لیست کاربران</button>
-      <button onclick="switchTab('logs')" id="btn-logs" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition">تاریخچه گفتگوها</button>
-      <button onclick="switchTab('tools')" id="btn-tools" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition">ابزارها و اطلاعیه</button>
+      <button onclick="switchTab('settings')" id="btn-settings" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition cursor-pointer">تنظیمات و هوش مصنوعی</button>
+      <button onclick="switchTab('users')" id="btn-users" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">لیست کاربران</button>
+      <button onclick="switchTab('logs')" id="btn-logs" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">تاریخچه گفتگوها</button>
+      <button onclick="switchTab('tools')" id="btn-tools" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">ابزارها و اطلاعیه</button>
     </div>
 
     <!-- تب تنظیمات -->
@@ -101,7 +101,7 @@
         <label for="botActive" class="text-sm font-medium cursor-pointer">فعال بودن ربات پاسخگو</label>
       </div>
 
-      <!-- گزینه جدید: فعال‌سازی هوش مصنوعی تصویرساز -->
+      <!-- گزینه فعال‌سازی هوش مصنوعی تصویرساز -->
       <div class="mt-3 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
         <input type="checkbox" id="imageGenEnabled" class="w-5 h-5 accent-amber-500 rounded cursor-pointer">
         <label for="imageGenEnabled" class="text-sm font-medium cursor-pointer text-amber-300">🎨 فعال‌سازی هوش مصنوعی تصویرساز برای کاربران</label>
@@ -132,7 +132,7 @@
     <div id="tab-logs" class="tab-content hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
       <div class="flex justify-between items-center mb-4">
         <h2 id="logsTitle" class="text-lg font-bold text-emerald-400">📜 تاریخچه تمام گفتگوها</h2>
-        <button onclick="resetLogsFilter()" id="resetFilterBtn" class="hidden bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold text-amber-400 transition">نمایش همه گفتگوها</button>
+        <button onclick="resetLogsFilter()" id="resetFilterBtn" class="hidden bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold text-amber-400 transition cursor-pointer">نمایش همه گفتگوها</button>
       </div>
       <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2" id="logsContainer"></div>
     </div>
@@ -142,12 +142,12 @@
       <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
         <h3 class="text-md font-bold mb-3 text-emerald-400">📢 ارسال اطلاعیه همگانی</h3>
         <textarea id="broadcastText" rows="4" placeholder="متن اطلاعیه..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm mb-3 focus:outline-none focus:border-emerald-500"></textarea>
-        <button onclick="sendBroadcast()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl text-sm font-bold transition">ارسال اطلاعیه</button>
+        <button onclick="sendBroadcast()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">ارسال اطلاعیه</button>
       </div>
       <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
         <h3 class="text-md font-bold mb-3 text-red-400">🗑️ مدیریت و پاکسازی دیتابیس</h3>
         <p class="text-xs text-slate-400 mb-4">پاکسازی کل تاریخچه چت‌های ذخیره شده در حافظه ابری.</p>
-        <button onclick="clearAllLogs()" class="bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl text-sm font-bold transition">پاکسازی کامل تاریخچه</button>
+        <button onclick="clearAllLogs()" class="bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">پاکسازی کامل تاریخچه</button>
       </div>
     </div>
 
@@ -171,10 +171,10 @@
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('[id^="btn-"]').forEach(el => {
-        el.className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition";
+        el.className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer";
       });
       document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-      document.getElementById(`btn-${tabName}`).className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition";
+      document.getElementById(`btn-${tabName}`).className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition cursor-pointer";
     }
 
     async function loadAdminData() {
@@ -195,7 +195,6 @@
           document.getElementById('temperature').value = globalData.settings.temperature ?? 0.7;
           document.getElementById('maxTokens').value = globalData.settings.maxTokens ?? 1024;
           document.getElementById('botActive').checked = globalData.settings.botActive ?? true;
-          // لود کردن وضعیت تیک تصویرساز
           document.getElementById('imageGenEnabled').checked = globalData.settings.imageGenEnabled ?? false;
         }
 
@@ -216,8 +215,8 @@
               <td class="p-3 text-slate-400" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.phone}</td>
               <td class="p-3 text-slate-400 text-xs">${u.time}</td>
               <td class="p-3 flex gap-2">
-                <button onclick="viewUserChats('${u.phone}', '${u.name}')" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-bold transition">مشاهده چت‌ها</button>
-                <button onclick="toggleBlock('${u.phone}')" class="px-3 py-1 rounded-lg text-xs font-bold ${isBlocked ? 'bg-emerald-600' : 'bg-red-600'} transition">${isBlocked ? 'آزاد' : 'مسدود'}</button>
+                <button onclick="viewUserChats('${u.phone}', '${u.name}')" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer">مشاهده چت‌ها</button>
+                <button onclick="toggleBlock('${u.phone}')" class="px-3 py-1 rounded-lg text-xs font-bold ${isBlocked ? 'bg-emerald-600' : 'bg-red-600'} transition cursor-pointer">${isBlocked ? 'آزاد' : 'مسدود'}</button>
               </td>
             </tr>`;
         });
@@ -275,7 +274,6 @@
         temperature: parseFloat(document.getElementById('temperature').value),
         maxTokens: parseInt(document.getElementById('maxTokens').value),
         botActive: document.getElementById('botActive').checked,
-        // ذخیره وضعیت تیک تصویرساز
         imageGenEnabled: document.getElementById('imageGenEnabled').checked
       };
       const res = await fetch('/api/admin/settings', {
