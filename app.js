@@ -42,6 +42,21 @@ function initApp() {
         imageModeBtn.addEventListener('click', toggleImageMode);
     }
 
+    // ⚡ فعال‌سازی کلیک روی دکمه‌ها و کارت‌های پیشنهادی (احکام نماز مسافر، تفسیر آیه الکرسی و...)
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    if (welcomeScreen) {
+        welcomeScreen.addEventListener('click', (e) => {
+            const target = e.target.closest('button, .suggestion-card, .card, div[onclick]');
+            if (target && chatInput) {
+                const promptText = target.innerText.trim();
+                if (promptText && promptText.length > 2) {
+                    chatInput.value = promptText;
+                    sendMessage();
+                }
+            }
+        });
+    }
+
     checkUserSession();
 }
 
@@ -248,7 +263,7 @@ function toggleImageMode() {
         showToast('حالت ساخت تصویر فعال شد');
     } else {
         if (btn) btn.style.background = 'rgba(212, 175, 55, 0.1)';
-        if (input) input.placeholder = 'چه چیزی در ذهنتان است؟';
+        if (input) input.placeholder = 'پرسش خود را وارد کنید...';
         showToast('حالت متن فعال شد');
     }
 }
