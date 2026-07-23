@@ -1,3 +1,6 @@
+const DEFAULT_OPENROUTER_KEY = ""; // اگر خواستی کلید OpenRouter رو می‌تونی اینجا هم بذاری
+const DEFAULT_GROQ_KEY = "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";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -43,11 +46,10 @@ export default {
         }), { headers: corsHeaders });
       }
 
-      // ۳. ارسال پیام و ارتباط با OpenRouter / Pollinations
+      // ۳. ارسال پیام و ارتباط با هوش مصنوعی (Groq / OpenRouter)
       if (path === "/api/chat" && request.method === "POST") {
         const { message, user, isImageMode } = await request.json();
 
-        // بررسی مسدود بودن کاربر
         let blocked = [];
         try {
           blocked = JSON.parse(await env.AVAYE_YAGHIN_KV.get("blocked") || "[]");
@@ -57,26 +59,28 @@ export default {
           return new Response(JSON.stringify({ reply: "حساب کاربری شما در این سامانه مسدود شده است." }), { headers: corsHeaders });
         }
 
-        // دریافت تنظیمات ادمین از KV
         let settings = {};
         try {
           settings = JSON.parse(await env.AVAYE_YAGHIN_KV.get("settings") || "{}");
         } catch (e) {}
 
-        // اگر حالت تصویرساز فعال است
+        const openRouterKey = env.OPENROUTER_API_KEY || DEFAULT_OPENROUTER_KEY;
+        const groqKey = env.GROQ_API_KEY || DEFAULT_GROQ_KEY;
+
+        // حالت تصویرساز
         if (isImageMode) {
           if (!settings.imageGenEnabled) {
             return new Response(JSON.stringify({ error: "قابلیت تصویرسازی توسط مدیریت غیرفعال شده است." }), { status: 403, headers: corsHeaders });
           }
 
-          const translateRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          const translateRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+              "Authorization": `Bearer ${groqKey}`,
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              model: "openai/gpt-oss-20b",
+              model: "llama-3.3-70b-versatile",
               messages: [
                 { role: "system", content: "You are an image prompt generator. Translate the user prompt to English and provide a clear descriptive prompt. Output ONLY the English prompt without any extra explanation or quotes." },
                 { role: "user", content: message }
@@ -92,7 +96,7 @@ export default {
           const randomSeed = Math.floor(Math.random() * 999999);
           const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(translatedPrompt)}?width=1024&height=1024&seed=${randomSeed}&nologo=true&model=flux`;
 
-          // ذخیره لاگ تصویرسازی در KV برای پنل ادمین
+          // ذخیره لاگ تصویرسازی در KV برای ادمین
           try {
             let logs = JSON.parse(await env.AVAYE_YAGHIN_KV.get("chat_logs") || "[]");
             logs.unshift({
@@ -117,35 +121,64 @@ export default {
 
         // حالت گفتگو متنی عادی
         const systemPrompt = settings.systemPrompt || "تو دستیار هوشمند و متخصص دینی سامانه آوای یقین هستی. پاسخ‌ها باید کاملاً مستند، دقیق و به زبان فارسی روان باشند.";
-        const selectedModel = settings.model || "openai/gpt-oss-20b";
+        const selectedModel = settings.model || "groq/llama-3.3-70b-versatile";
         const temp = settings.temperature ?? 0.7;
         const maxTokens = settings.maxTokens ?? 1024;
 
-        const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
-            "HTTP-Referer": request.headers.get("origin") || "https://avaye-yaghin.com",
-            "X-Title": "Avaye Yaghin",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: selectedModel,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: message }
-            ],
-            temperature: temp,
-            max_tokens: maxTokens
-          })
-        });
+        let reply = "";
 
-        const openRouterData = await openRouterRes.json();
-        if (!openRouterRes.ok) {
-          return new Response(JSON.stringify({ error: openRouterData.error?.message || "خطا در ارتباط با هوش مصنوعی OpenRouter" }), { status: 500, headers: corsHeaders });
+        if (selectedModel.startsWith("groq/")) {
+          const realModel = selectedModel.replace("groq/", "");
+          const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${groqKey}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: realModel,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: message }
+              ],
+              temperature: temp,
+              max_tokens: maxTokens
+            })
+          });
+
+          const groqData = await groqRes.json();
+          if (!groqRes.ok) {
+            return new Response(JSON.stringify({ error: groqData.error?.message || "خطا در ارتباط با API گروگ (Groq)" }), { status: 500, headers: corsHeaders });
+          }
+          reply = groqData.choices?.[0]?.message?.content || "پاسخی از سرور دریافت نشد.";
+
+        } else {
+          // استفاده از OpenRouter
+          const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openRouterKey}`,
+              "HTTP-Referer": request.headers.get("origin") || "https://avaye-yaghin.com",
+              "X-Title": "Avaye Yaghin",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: selectedModel,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: message }
+              ],
+              temperature: temp,
+              max_tokens: maxTokens
+            })
+          });
+
+          const openRouterData = await openRouterRes.json();
+          if (!openRouterRes.ok) {
+            return new Response(JSON.stringify({ error: openRouterData.error?.message || "خطا در ارتباط با OpenRouter" }), { status: 500, headers: corsHeaders });
+          }
+          reply = openRouterData.choices?.[0]?.message?.content || "پاسخی از سرور دریافت نشد.";
         }
-        
-        const reply = openRouterData.choices?.[0]?.message?.content || "پاسخی از سرور دریافت نشد.";
 
         // ذخیره لاگ
         try {
