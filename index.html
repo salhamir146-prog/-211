@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>آوای یقین - دستیار هوشمند</title>
+  <title>آوای یقین</title>
   <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css" rel="stylesheet">
   <style>
     * {
@@ -15,105 +15,108 @@
     }
 
     body {
-      background-color: #0b0f19;
-      color: #f1f5f9;
+      background-color: #0d0f12;
+      color: #e2e8f0;
       height: 100vh;
-      height: 100dvh; /* پشتیبانی عالی از ارتفاع واقعی در مرورگرهای موبایل */
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* ================= مودال ثبت‌نام / ورود ================= */
+    /* ================= مودال ورود لاکچری ================= */
     #registrationModal {
       position: fixed;
       inset: 0;
-      background: rgba(11, 15, 25, 0.95);
-      backdrop-filter: blur(8px);
+      background: rgba(13, 15, 18, 0.95);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 20px;
       z-index: 1000;
     }
 
     .modal-box {
-      background: #161e2e;
-      border: 1px solid #2d3748;
+      background: linear-gradient(145deg, #161a22, #0f1217);
+      border: 1px solid rgba(212, 175, 55, 0.3);
       width: 100%;
       max-width: 400px;
-      padding: 24px;
+      padding: 28px 24px;
       border-radius: 24px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.1);
     }
 
     .modal-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
       color: #f5df91;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      text-shadow: 0 0 10px rgba(245, 223, 145, 0.2);
     }
 
     .input-group {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .input-group label {
       display: block;
       font-size: 13px;
       color: #94a3b8;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     .custom-input {
       width: 100%;
-      padding: 14px 16px;
-      background: #0f172a;
-      border: 1px solid #334155;
+      padding: 15px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 14px;
       color: #fff;
-      font-size: 15px;
+      font-size: 16px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.3s ease;
     }
 
     .custom-input:focus {
       border-color: #d4af37;
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
     }
 
     .btn-submit {
       width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #d4af37, #aa7c11);
-      color: #000;
+      padding: 15px;
+      background: linear-gradient(135deg, #f5df91, #d4af37, #aa7c11);
+      color: #0d0f12;
       font-weight: 700;
       font-size: 16px;
       border: none;
       border-radius: 14px;
       cursor: pointer;
-      margin-top: 8px;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
     }
 
-    /* ================= هدر اصلی ================= */
+    /* ================= هدر ================= */
     header {
-      background: #161e2e;
-      border-bottom: 1px solid #1e293b;
-      padding: 12px 16px;
+      background: rgba(22, 26, 34, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-height: 60px;
     }
 
     .header-info h1 {
-      font-size: 15px;
+      font-size: 17px;
       font-weight: 700;
       color: #f5df91;
     }
 
     .header-info span {
-      font-size: 11px;
+      font-size: 12px;
       color: #64748b;
     }
 
@@ -123,16 +126,16 @@
     }
 
     .btn-icon {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #cbd5e1;
-      padding: 8px 12px;
-      border-radius: 10px;
-      font-size: 12px;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      color: #f5df91;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 13px;
       cursor: pointer;
     }
 
-    /* ================= محفظه پیام‌ها ================= */
+    /* ================= منطقه چت ================= */
     #chatContainer {
       flex: 1;
       overflow-y: auto;
@@ -152,11 +155,13 @@
     }
 
     #welcomeScreen .icon {
-      font-size: 48px;
+      font-size: 52px;
+      filter: drop-shadow(0 0 10px rgba(245, 223, 145, 0.2));
     }
 
     #welcomeScreen p {
-      font-size: 15px;
+      font-size: 16px;
+      color: #94a3b8;
     }
 
     #messagesArea {
@@ -166,11 +171,11 @@
       width: 100%;
     }
 
-    /* ================= حباب پیام‌ها (درشت و مناسب موبایل) ================= */
+    /* ================= پیام‌ها (بهینه‌شده و خوش‌دست برای موبایل) ================= */
     .message {
       display: flex;
       flex-direction: column;
-      max-width: 88%;
+      max-width: 90%;
       animation: fadeIn 0.2s ease-in-out;
     }
 
@@ -190,29 +195,33 @@
     .message-content {
       padding: 14px 18px;
       border-radius: 20px;
-      font-size: 15px; /* فونت درشت و خوانا در گوشی */
+      font-size: 15px; /* درشت و خوانا تو موبایل */
       line-height: 1.6;
       word-break: break-word;
     }
 
     .message.user .message-content {
-      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
-      color: #ffffff;
+      background: linear-gradient(135deg, #d4af37, #aa7c11);
+      color: #0d0f12;
+      font-weight: 500;
       border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
     }
 
     .message.ai .message-content {
-      background: #1e293b;
-      color: #f1f5f9;
-      border: 1px solid #334155;
+      background: #161a22;
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
-    /* ================= بخش ورودی پیام (ویژه موبایل) ================= */
+    /* ================= باکس ارسال پیام (درشت و عالی) ================= */
     footer {
-      background: #161e2e;
-      border-top: 1px solid #1e293b;
-      padding: 12px 16px;
+      background: rgba(22, 26, 34, 0.9);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 14px;
     }
 
     #chatForm {
@@ -226,33 +235,35 @@
 
     #chatInput {
       flex: 1;
-      background: #0f172a;
-      border: 1px solid #334155;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 16px;
       padding: 14px 16px;
       color: #fff;
-      font-size: 16px; /* جلوگیری از زوم ناخواسته در آیفون و اندروید */
+      font-size: 16px; /* اندازه درشت بدون زوم صفحه در گوشی */
       outline: none;
+      transition: all 0.3s ease;
     }
 
     #chatInput:focus {
       border-color: #d4af37;
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .btn-send {
-      background: linear-gradient(135deg, #d4af37, #aa7c11);
-      color: #000;
+      background: linear-gradient(135deg, #f5df91, #d4af37, #aa7c11);
+      color: #0d0f12;
       border: none;
       border-radius: 16px;
-      padding: 14px 20px;
+      padding: 0 22px;
+      height: 50px;
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-width: 70px;
-      height: 50px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
     }
 
     /* ================= اعلان‌ها (Toast) ================= */
@@ -268,13 +279,13 @@
     }
 
     .toast {
-      background: #1e293b;
+      background: #161a22;
       border: 1px solid #d4af37;
       color: #f5df91;
-      padding: 10px 20px;
-      border-radius: 12px;
-      font-size: 13px;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+      padding: 12px 22px;
+      border-radius: 14px;
+      font-size: 14px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
     .hidden {
@@ -320,7 +331,7 @@
   <!-- چت -->
   <div id="chatContainer">
     <div id="welcomeScreen">
-      <div class="icon">💡</div>
+      <div class="icon">✨</div>
       <p>چطور می‌توانم کمکتان کنم؟</p>
     </div>
     <div id="messagesArea"></div>
