@@ -1,6 +1,3 @@
-const DEFAULT_OPENROUTER_KEY = ""; // اگر خواستی کلید OpenRouter رو می‌تونی اینجا هم بذاری
-const DEFAULT_GROQ_KEY =
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -64,13 +61,18 @@ export default {
           settings = JSON.parse(await env.AVAYE_YAGHIN_KV.get("settings") || "{}");
         } catch (e) {}
 
-        const openRouterKey = env.OPENROUTER_API_KEY || DEFAULT_OPENROUTER_KEY;
-        const groqKey = env.GROQ_API_KEY || DEFAULT_GROQ_KEY;
+        // فراخوانی مستقیم کلیدها از Environment Variables کلودفلر
+        const groqKey = env.GROQ_API_KEY;
+        const openRouterKey = env.OPENROUTER_API_KEY;
 
         // حالت تصویرساز
         if (isImageMode) {
           if (!settings.imageGenEnabled) {
             return new Response(JSON.stringify({ error: "قابلیت تصویرسازی توسط مدیریت غیرفعال شده است." }), { status: 403, headers: corsHeaders });
+          }
+
+          if (!groqKey) {
+            return new Response(JSON.stringify({ error: "کلید GROQ_API_KEY در کلودفلر تنظیم نشده است." }), { status: 500, headers: corsHeaders });
           }
 
           const translateRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -96,7 +98,6 @@ export default {
           const randomSeed = Math.floor(Math.random() * 999999);
           const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(translatedPrompt)}?width=1024&height=1024&seed=${randomSeed}&nologo=true&model=flux`;
 
-          // ذخیره لاگ تصویرسازی در KV برای ادمین
           try {
             let logs = JSON.parse(await env.AVAYE_YAGHIN_KV.get("chat_logs") || "[]");
             logs.unshift({
@@ -128,6 +129,10 @@ export default {
         let reply = "";
 
         if (selectedModel.startsWith("groq/")) {
+          if (!groqKey) {
+            return new Response(JSON.stringify({ error: "کلید GROQ_API_KEY در کلودفلر تنظیم نشده است." }), { status: 500, headers: corsHeaders });
+          }
+
           const realModel = selectedModel.replace("groq/", "");
           const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -153,7 +158,10 @@ export default {
           reply = groqData.choices?.[0]?.message?.content || "پاسخی از سرور دریافت نشد.";
 
         } else {
-          // استفاده از OpenRouter
+          if (!openRouterKey) {
+            return new Response(JSON.stringify({ error: "کلید OPENROUTER_API_KEY در کلودفلر تنظیم نشده است." }), { status: 500, headers: corsHeaders });
+          }
+
           const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
