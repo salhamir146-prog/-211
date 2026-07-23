@@ -268,7 +268,110 @@ function toggleImageMode() {
     }
 }
 
+// نگهدارنده‌ی گفتار جاری و لیست صداها
+let currentUtterance = null;
+let cachedVoices = [];
+
+// بارگذاری صداهای مرورگر (به‌صورت ناهمگام لود می‌شوند)
+function loadVoices() {
+    if (!('speechSynthesis' in window)) return;
+    cachedVoices = window.speechSynthesis.getVoices() || [];
+}
+if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// انتخاب بهترین صدای مردانه‌ی فارسی
+function pickPersianMaleVoice() {
+    const voices = (window.speechSynthesis.getVoices() || []).length
+        ? window.speechSynthesis.getVoices()
+        : cachedVoices;
+
+    if (!voices.length) return null;
+
+    // ۱) صداهای فارسی (fa)
+    const persian = voices.filter(v => /^fa\b|fa[-_]/i.test(v.lang) || /persian|farsi|فارسی/i.test(v.name));
+    // ۲) اگر فارسی نبود، عربی نزدیک‌ترین گزینه است
+    const arabic = voices.filter(v => /^ar\b|ar[-_]/i.test(v.lang));
+
+    const maleHints = /(male|dariush|داریوش|man|mard|مرد|hamed|reza|majid|ahmad|hoda-?male)/i;
+    const femaleHints = /(female|zan|زن|dilara|hoda|female|woman|google فارسی)/i;
+
+    // اولویت: فارسیِ مرد → فارسیِ غیرزن → هر فارسی → عربیِ مرد → هر عربی
+    const persianMale = persian.find(v => maleHints.test(v.name));
+    if (persianMale) return persianMale;
+
+    const persianNonFemale = persian.find(v => !femaleHints.test(v.name));
+    if (persianNonFemale) return persianNonFemale;
+
+    if (persian.length) return persian[0];
+
+    const arabicMale = arabic.find(v => maleHints.test(v.name));
+    if (arabicMale) return arabicMale;
+
+    if (arabic.length) return arabic[0];
+
+    return null;
+}
+
 function speakText(btn, text) {
+    // اگر مرورگر پشتیبانی نمی‌کند
+    if (!('speechSynthesis' in window)) {
+        showToast('مرورگر شما از پخش صوتی پشتیبانی نمی‌کند');
+        return;
+    }
+
+    // اگر در حال پخش است، متوقف کن (toggle)
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+        currentUtterance = null;
+        btn.innerHTML = '🔊 پخش پاسخ';
+        return;
+    }
+
+    // پاک‌سازی متن از ایموجی‌ها و کاراکترهای اضافی برای خواندن روان
+    const clean = text
+        .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
+        .replace(/[*_`#>~|]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (!clean) return;
+
+    const voice = pickPersianMaleVoice();
+
+    // اگر روی این دستگاه هیچ صدای فارسی/عربی نبود، از fallback صوتی استفاده کن
+    if (!voice) {
+        speakWithFallback(btn, clean);
+        return;
+    }
+
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.lang = voice.lang || 'fa-IR';
+    utter.voice = voice;
+
+    // سرعت خواندن از تنظیمات مدیریت (روان و طبیعی)
+    utter.rate = Math.min(Math.max(parseFloat(botSettings.voiceSpeed || 1), 0.5), 1.5);
+    utter.pitch = 0.9;   // کمی بم‌تر برای حس مردانه
+    utter.volume = 1;
+
+    currentUtterance = utter;
+    btn.innerHTML = '⏸ در حال پخش...';
+
+    utter.onend = () => {
+        btn.innerHTML = '🔊 پخش پاسخ';
+        currentUtterance = null;
+    };
+    utter.onerror = () => {
+        btn.innerHTML = '🔊 پخش پاسخ';
+        currentUtterance = null;
+    };
+
+    window.speechSynthesis.speak(utter);
+}
+
+// پخش جایگزین وقتی صدای فارسی روی دستگاه نصب نیست (تکه‌تکه برای متن‌های بلند)
+function speakWithFallback(btn, clean) {
     if (currentAudio && !currentAudio.paused) {
         currentAudio.pause();
         currentAudio = null;
@@ -276,17 +379,27 @@ function speakText(btn, text) {
         return;
     }
 
-    const clean = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
-    if (!clean) return;
+    // شکستن متن به قطعات کوتاه (محدودیت سرویس صوتی)
+    const chunks = clean.match(/[\s\S]{1,180}(?=\s|$)/g) || [clean];
+    let i = 0;
+    btn.innerHTML = '⏸ در حال پخش...';
 
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean.substring(0, 300))}&tl=fa&client=tw-ob`;
-    currentAudio = new Audio(url);
-    currentAudio.playbackRate = parseFloat(botSettings.voiceSpeed || 1);
+    const playNext = () => {
+        if (i >= chunks.length) {
+            btn.innerHTML = '🔊 پخش پاسخ';
+            currentAudio = null;
+            return;
+        }
+        const part = chunks[i++].trim();
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(part)}&tl=fa&client=tw-ob`;
+        currentAudio = new Audio(url);
+        currentAudio.playbackRate = Math.min(Math.max(parseFloat(botSettings.voiceSpeed || 1), 0.5), 1.5);
+        currentAudio.onended = playNext;
+        currentAudio.onerror = () => { btn.innerHTML = '🔊 پخش پاسخ'; currentAudio = null; };
+        currentAudio.play().catch(() => { btn.innerHTML = '🔊 پخش پاسخ'; currentAudio = null; });
+    };
 
-    btn.innerHTML = 'متأسفیم درحال حاظر این قابلیت برای شما فعال نیست.';
-
-    currentAudio.play().catch(() => { btn.innerHTML = '🔊 پخش پاسخ'; });
-    currentAudio.onended = () => { btn.innerHTML = '🔊 پخش پاسخ'; currentAudio = null; };
+    playNext();
 }
 
 function showToast(message) {
