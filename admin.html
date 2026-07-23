@@ -3,97 +3,188 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-  <meta name="theme-color" content="#020617">
+  <meta name="theme-color" content="#04120c">
   <title>پنل مدیریت جامع - آوای یقین</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Vazirmatn', sans-serif; }
+    :root {
+      --gold: #d8b04a;
+      --gold-light: #f7e3a1;
+      --green-light: #178a5f;
+      --green-glow: #10b981;
+      --bg-0: #04120c;
+      --border: rgba(255, 255, 255, 0.1);
+      --border-gold: rgba(216, 176, 74, 0.35);
+      --muted: #9fb3aa;
+    }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      color: #f3f6f4;
+      min-height: 100vh;
+      background:
+        radial-gradient(1100px 640px at 84% -10%, rgba(216, 176, 74, 0.13), transparent 60%),
+        radial-gradient(900px 560px at 4% 110%, rgba(16, 185, 129, 0.15), transparent 60%),
+        radial-gradient(circle at top, #123b2c 0%, var(--bg-0) 70%);
+      background-attachment: fixed;
+    }
     input, textarea, select { font-size: 16px; }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.35); }
+
+    .glass {
+      background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 55px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .field {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff; border-radius: 14px; transition: all 0.3s ease;
+    }
+    .field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 4px rgba(216,175,55,0.13); background: rgba(255,255,255,0.07); }
+
+    .stat-card { position: relative; overflow: hidden; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+    .stat-card:hover { transform: translateY(-4px); }
+    .stat-card::before {
+      content:""; position:absolute; top:-30px; left:-30px; width:90px; height:90px;
+      border-radius:50%; filter: blur(30px); opacity:0.5;
+    }
+
+    .tab-btn {
+      padding: 0.65rem 1.15rem; border-radius: 0.9rem; font-weight: 700; font-size: 0.82rem;
+      color: var(--muted); background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      transition: all 0.25s ease; white-space: nowrap; cursor: pointer;
+    }
+    .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(216,176,74,0.24));
+      border-color: var(--border-gold); color: var(--gold-light);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--green-light), var(--gold)); color: #04120c;
+      font-weight: 800; transition: all 0.3s ease; box-shadow: 0 8px 22px rgba(216,176,74,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(216,176,74,0.45); }
+    .btn-primary:active { transform: translateY(0); }
+
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(216,176,74,0.3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(216,176,74,0.55); }
+
+    @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+    .animate-fadeUp { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1); }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-glow); box-shadow: 0 0 0 0 rgba(16,185,129,0.6); animation: pulseDot 2s infinite; display:inline-block; }
+    @keyframes pulseDot { 0%{box-shadow:0 0 0 0 rgba(16,185,129,0.5);} 70%{box-shadow:0 0 0 7px rgba(16,185,129,0);} 100%{box-shadow:0 0 0 0 rgba(16,185,129,0);} }
+
     @media (max-width: 640px) {
       #adminContainer { padding: 12px !important; }
-      header.mb-8 { padding: 16px !important; }
-      .grid.md\:grid-cols-4 > div { padding: 14px !important; }
       table { font-size: 12.5px; }
       th, td { padding: 8px !important; white-space: nowrap; }
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body>
 
   <!-- Modal Passcode -->
-  <div id="authModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-md w-full shadow-2xl">
-      <h2 class="text-xl font-bold mb-4 text-emerald-400 text-center">🔐 ورود به پنل مدیریت آوای یقین</h2>
-      <p class="text-xs text-slate-400 mb-4 text-center">لطفاً رمز عبور مدیریت را وارد کنید:</p>
-      <input type="password" id="passcodeInput" placeholder="رمز عبور..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl mb-4 text-sm focus:outline-none focus:border-emerald-500">
-      <button onclick="checkPasscode()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold transition text-sm cursor-pointer">تایید و ورود</button>
-      <p id="authError" class="text-red-500 text-xs mt-3 text-center hidden">رمز عبور اشتباه است!</p>
+  <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(2,10,7,0.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
+    <div class="glass p-8 rounded-3xl max-w-md w-full text-center animate-fadeUp">
+      <div class="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center text-2xl" style="background:linear-gradient(135deg,var(--green-light),var(--gold));color:#04120c;box-shadow:0 10px 28px rgba(216,176,74,0.3)">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h2 class="text-xl font-black mb-1.5" style="background:linear-gradient(90deg,#fff,var(--gold-light));-webkit-background-clip:text;background-clip:text;color:transparent">ورود به پنل مدیریت</h2>
+      <p class="text-xs mb-6" style="color:var(--muted)">لطفاً رمز عبور مدیریت را وارد کنید</p>
+      <input type="password" id="passcodeInput" placeholder="رمز عبور..." class="field w-full p-3.5 mb-4 text-sm text-center">
+      <button onclick="checkPasscode()" class="btn-primary w-full py-3.5 rounded-2xl text-sm cursor-pointer">تایید و ورود</button>
+      <p id="authError" class="text-red-400 text-xs mt-3 hidden">رمز عبور اشتباه است!</p>
     </div>
   </div>
 
   <!-- Main Admin Container -->
   <div id="adminContainer" class="hidden max-w-7xl mx-auto p-4 md:p-8">
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-      <div>
-        <h1 class="text-2xl font-bold text-emerald-400">⚡ پنل مدیریت هوشمند سامانه</h1>
-        <p class="text-xs text-slate-400 mt-1">مدیریت کامل ربات، کاربران و گفتگوهای اختصاصی</p>
+    <header class="glass flex flex-col md:flex-row justify-between items-center mb-7 p-6 rounded-3xl animate-fadeUp">
+      <div class="flex items-center gap-4 text-center md:text-right">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" style="background:linear-gradient(135deg,var(--green-light),var(--gold));color:#04120c">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-black" style="background:linear-gradient(90deg,#fff,var(--gold-light));-webkit-background-clip:text;background-clip:text;color:transparent">پنل مدیریت هوشمند</h1>
+          <p class="text-xs mt-1" style="color:var(--muted)">مدیریت کامل ربات، کاربران و گفتگوها</p>
+        </div>
       </div>
-      <button onclick="location.reload()" class="mt-4 md:mt-0 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition cursor-pointer">خروج / قفل مجدد</button>
+      <button onclick="location.reload()" class="mt-4 md:mt-0 px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> خروج / قفل مجدد
+      </button>
     </header>
 
     <!-- آمار سریع -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
-        <p class="text-xs text-slate-400">کل کاربران ثبت‌نامی</p>
-        <h3 id="statUsers" class="text-2xl font-bold text-emerald-400 mt-2">0</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-7">
+      <div class="glass stat-card p-5 rounded-2xl animate-fadeUp" style="--c:rgba(16,185,129,0.6)">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs" style="color:var(--muted)">کل کاربران</p>
+          <i class="fa-solid fa-users" style="color:var(--green-glow)"></i>
+        </div>
+        <h3 id="statUsers" class="text-3xl font-black" style="color:#6ee7b7">0</h3>
       </div>
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
-        <p class="text-xs text-slate-400">کل گفتگوها و لاگ‌ها</p>
-        <h3 id="statLogs" class="text-2xl font-bold text-blue-400 mt-2">0</h3>
+      <div class="glass stat-card p-5 rounded-2xl animate-fadeUp">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs" style="color:var(--muted)">کل گفتگوها</p>
+          <i class="fa-solid fa-comments" style="color:#7dd3fc"></i>
+        </div>
+        <h3 id="statLogs" class="text-3xl font-black" style="color:#7dd3fc">0</h3>
       </div>
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
-        <p class="text-xs text-slate-400">کاربران مسدود شده</p>
-        <h3 id="statBlocked" class="text-2xl font-bold text-red-400 mt-2">0</h3>
+      <div class="glass stat-card p-5 rounded-2xl animate-fadeUp">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs" style="color:var(--muted)">مسدود شده</p>
+          <i class="fa-solid fa-user-slash" style="color:#fca5a5"></i>
+        </div>
+        <h3 id="statBlocked" class="text-3xl font-black" style="color:#fca5a5">0</h3>
       </div>
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
-        <p class="text-xs text-slate-400">وضعیت ربات</p>
-        <h3 id="statStatus" class="text-xl font-bold text-emerald-400 mt-2">فعال</h3>
+      <div class="glass stat-card p-5 rounded-2xl animate-fadeUp">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs" style="color:var(--muted)">وضعیت ربات</p>
+          <span class="status-dot"></span>
+        </div>
+        <h3 id="statStatus" class="text-xl font-black mt-1.5" style="color:var(--gold-light)">فعال</h3>
       </div>
     </div>
 
     <!-- تب‌ها -->
-    <div class="flex gap-2 mb-6 border-b border-slate-800 pb-3 overflow-x-auto">
-      <button onclick="switchTab('settings')" id="btn-settings" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition cursor-pointer">تنظیمات و هوش مصنوعی</button>
-      <button onclick="switchTab('users')" id="btn-users" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">لیست کاربران</button>
-      <button onclick="switchTab('logs')" id="btn-logs" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">تاریخچه گفتگوها</button>
-      <button onclick="switchTab('tools')" id="btn-tools" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">ابزارها و اطلاعیه</button>
+    <div class="flex gap-2.5 mb-6 pb-1 overflow-x-auto">
+      <button onclick="switchTab('settings')" id="btn-settings" class="tab-btn active"><i class="fa-solid fa-robot ml-1.5"></i>تنظیمات هوش مصنوعی</button>
+      <button onclick="switchTab('users')" id="btn-users" class="tab-btn"><i class="fa-solid fa-users ml-1.5"></i>لیست کاربران</button>
+      <button onclick="switchTab('logs')" id="btn-logs" class="tab-btn"><i class="fa-solid fa-clock-rotate-left ml-1.5"></i>تاریخچه گفتگوها</button>
+      <button onclick="switchTab('tools')" id="btn-tools" class="tab-btn"><i class="fa-solid fa-toolbox ml-1.5"></i>ابزارها</button>
     </div>
 
     <!-- تب تنظیمات -->
-    <div id="tab-settings" class="tab-content bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-      <h2 class="text-lg font-bold mb-4 text-emerald-400">⚙️ تنظیمات شخصیت و رفتار هوش مصنوعی</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div id="tab-settings" class="tab-content glass p-6 rounded-3xl animate-fadeUp">
+      <h2 class="text-lg font-black mb-5 flex items-center gap-2" style="color:var(--gold-light)"><i class="fa-solid fa-sliders"></i> تنظیمات شخصیت و رفتار هوش مصنوعی</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">شخصیت و دستورات سیستمی (System Prompt):</label>
-          <textarea id="systemPrompt" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
+          <label class="block text-xs font-medium mb-2" style="color:var(--muted)">شخصیت و دستورات سیستمی (System Prompt)</label>
+          <textarea id="systemPrompt" rows="5" class="field w-full p-3.5 text-sm"></textarea>
         </div>
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">یادداشت‌ها و نکات مدیریت مسجد:</label>
-          <textarea id="adminNotes" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
+          <label class="block text-xs font-medium mb-2" style="color:var(--muted)">یادداشت‌ها و نکات مدیریت مسجد</label>
+          <textarea id="adminNotes" rows="5" class="field w-full p-3.5 text-sm"></textarea>
         </div>
-
-        <!-- بخش انتخاب مدل هوش مصنوعی -->
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب ارائه دهنده و مدل هوش مصنوعی:</label>
-          <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
-            <optgroup label="⚡ سرویس Groq API (بسیار سریع - کلید جدید)">
+          <label class="block text-xs font-medium mb-2" style="color:var(--muted)">انتخاب ارائه‌دهنده و مدل هوش مصنوعی</label>
+          <select id="aiModel" class="field w-full p-3.5 text-sm">
+            <optgroup label="⚡ سرویس Groq API (بسیار سریع)">
               <option value="groq/llama-3.3-70b-versatile">Groq: Llama 3.3 70B (پیش‌فرض - بسیار قدرتمند)</option>
               <option value="groq/llama-3.1-8b-instant">Groq: Llama 3.1 8B (سریع‌ترین مدل)</option>
               <option value="groq/mixtral-8x7b-32768">Groq: Mixtral 8x7B</option>
             </optgroup>
-            
-            <optgroup label="🌐 سرویس OpenRouter API (کلید قبلی)">
+            <optgroup label="🌐 سرویس OpenRouter API">
               <option value="openai/gpt-oss-20b">GPT-OSS 20B (رایگان)</option>
               <option value="google/gemini-2.0-flash-001">Gemini 3.1 Flash</option>
               <option value="meta-llama/llama-3-70b-instruct">Llama 3 70B Instruct</option>
@@ -102,74 +193,72 @@
             </optgroup>
           </select>
         </div>
-
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">پیام خوش‌آمدگویی:</label>
-          <input type="text" id="welcomeMsg" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+          <label class="block text-xs font-medium mb-2" style="color:var(--muted)">پیام خوش‌آمدگویی</label>
+          <input type="text" id="welcomeMsg" class="field w-full p-3.5 text-sm">
         </div>
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">درجه خلاقیت (Temperature):</label>
-          <input type="number" step="0.1" min="0.1" max="1" id="temperature" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+          <label class="block text-xs font-medium mb-2" style="color:var(--muted)">درجه خلاقیت (Temperature)</label>
+          <input type="number" step="0.1" min="0.1" max="1" id="temperature" class="field w-full p-3.5 text-sm">
         </div>
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">حداکثر طول پاسخ (Max Tokens):</label>
-          <input type="number" id="maxTokens" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+          <label class="block text-xs font-medium mb-2" style="color:var(--muted)">حداکثر طول پاسخ (Max Tokens)</label>
+          <input type="number" id="maxTokens" class="field w-full p-3.5 text-sm">
         </div>
       </div>
 
-      <!-- گزینه فعال‌سازی ربات -->
-      <div class="mt-6 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+      <div class="mt-6 flex items-center gap-3 p-4 rounded-xl" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
         <input type="checkbox" id="botActive" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
         <label for="botActive" class="text-sm font-medium cursor-pointer">فعال بودن ربات پاسخگو</label>
       </div>
 
-      <!-- گزینه فعال‌سازی هوش مصنوعی تصویرساز -->
-      <div class="mt-3 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+      <div class="mt-3 flex items-center gap-3 p-4 rounded-xl" style="background:rgba(216,176,74,0.06);border:1px solid var(--border-gold)">
         <input type="checkbox" id="imageGenEnabled" class="w-5 h-5 accent-amber-500 rounded cursor-pointer">
-        <label for="imageGenEnabled" class="text-sm font-medium cursor-pointer text-amber-300">🎨 فعال‌سازی هوش مصنوعی تصویرساز برای کاربران</label>
+        <label for="imageGenEnabled" class="text-sm font-medium cursor-pointer" style="color:var(--gold-light)"><i class="fa-solid fa-wand-magic-sparkles ml-1"></i>فعال‌سازی هوش مصنوعی تصویرساز برای کاربران</label>
       </div>
 
-      <button onclick="saveSettings()" class="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl font-bold text-sm transition shadow-lg cursor-pointer">ذخیره تغییرات در فضای ابری</button>
+      <button onclick="saveSettings()" class="btn-primary mt-6 px-6 py-3.5 rounded-xl text-sm cursor-pointer flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> ذخیره تغییرات در فضای ابری</button>
     </div>
 
     <!-- تب کاربران -->
-    <div id="tab-users" class="tab-content hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-      <h2 class="text-lg font-bold mb-4 text-emerald-400">👥 لیست کاربران (جهت مشاهده چت اختصاصی روی هر کاربر کلیک کنید)</h2>
-      <div class="overflow-x-auto">
+    <div id="tab-users" class="tab-content hidden glass p-6 rounded-3xl animate-fadeUp">
+      <h2 class="text-lg font-black mb-4 flex items-center gap-2" style="color:var(--gold-light)"><i class="fa-solid fa-users"></i> لیست کاربران</h2>
+      <p class="text-xs mb-4" style="color:var(--muted)">برای مشاهده چت اختصاصی، روی هر کاربر کلیک کنید</p>
+      <div class="overflow-x-auto rounded-2xl" style="border:1px solid rgba(255,255,255,0.06)">
         <table class="w-full text-right text-sm">
-          <thead class="bg-slate-800 text-slate-400 text-xs uppercase">
+          <thead class="text-xs" style="background:rgba(255,255,255,0.04);color:var(--muted)">
             <tr>
-              <th class="p-3 rounded-r-xl">نام کاربر</th>
-              <th class="p-3">شماره تماس</th>
-              <th class="p-3">زمان ثبت‌نام</th>
-              <th class="p-3 rounded-l-xl">عملیات</th>
+              <th class="p-3.5">نام کاربر</th>
+              <th class="p-3.5">شماره تماس</th>
+              <th class="p-3.5">زمان ثبت‌نام</th>
+              <th class="p-3.5">عملیات</th>
             </tr>
           </thead>
-          <tbody id="usersTableBody" class="divide-y divide-slate-800"></tbody>
+          <tbody id="usersTableBody" class="divide-y" style="border-color:rgba(255,255,255,0.05)"></tbody>
         </table>
       </div>
     </div>
 
     <!-- تب لاگ‌ها -->
-    <div id="tab-logs" class="tab-content hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-      <div class="flex justify-between items-center mb-4">
-        <h2 id="logsTitle" class="text-lg font-bold text-emerald-400">📜 تاریخچه تمام گفتگوها</h2>
-        <button onclick="resetLogsFilter()" id="resetFilterBtn" class="hidden bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold text-amber-400 transition cursor-pointer">نمایش همه گفتگوها</button>
+    <div id="tab-logs" class="tab-content hidden glass p-6 rounded-3xl animate-fadeUp">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 id="logsTitle" class="text-lg font-black flex items-center gap-2" style="color:var(--gold-light)"><i class="fa-solid fa-clock-rotate-left"></i> تاریخچه تمام گفتگوها</h2>
+        <button onclick="resetLogsFilter()" id="resetFilterBtn" class="hidden px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" style="background:rgba(216,176,74,0.12);border:1px solid var(--border-gold);color:var(--gold-light)">نمایش همه گفتگوها</button>
       </div>
-      <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2" id="logsContainer"></div>
+      <div class="space-y-3.5 max-h-[600px] overflow-y-auto pr-2" id="logsContainer"></div>
     </div>
 
     <!-- تب ابزارها -->
-    <div id="tab-tools" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-        <h3 class="text-md font-bold mb-3 text-emerald-400">📢 ارسال اطلاعیه همگانی</h3>
-        <textarea id="broadcastText" rows="4" placeholder="متن اطلاعیه..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm mb-3 focus:outline-none focus:border-emerald-500"></textarea>
-        <button onclick="sendBroadcast()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">ارسال اطلاعیه</button>
+    <div id="tab-tools" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-5 animate-fadeUp">
+      <div class="glass p-6 rounded-3xl">
+        <h3 class="text-md font-black mb-3 flex items-center gap-2" style="color:#7dd3fc"><i class="fa-solid fa-bullhorn"></i> ارسال اطلاعیه همگانی</h3>
+        <textarea id="broadcastText" rows="4" placeholder="متن اطلاعیه..." class="field w-full p-3.5 text-sm mb-3"></textarea>
+        <button onclick="sendBroadcast()" class="px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer text-white" style="background:linear-gradient(135deg,#0ea5e9,#2563eb)"><i class="fa-solid fa-paper-plane ml-1"></i> ارسال اطلاعیه</button>
       </div>
-      <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-        <h3 class="text-md font-bold mb-3 text-red-400">🗑️ مدیریت و پاکسازی دیتابیس</h3>
-        <p class="text-xs text-slate-400 mb-4">پاکسازی کل تاریخچه چت‌های ذخیره شده در حافظه ابری.</p>
-        <button onclick="clearAllLogs()" class="bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">پاکسازی کامل تاریخچه</button>
+      <div class="glass p-6 rounded-3xl">
+        <h3 class="text-md font-black mb-3 flex items-center gap-2" style="color:#fca5a5"><i class="fa-solid fa-trash-can"></i> مدیریت و پاکسازی دیتابیس</h3>
+        <p class="text-xs mb-4" style="color:var(--muted)">پاکسازی کل تاریخچه چت‌های ذخیره شده در حافظه ابری.</p>
+        <button onclick="clearAllLogs()" class="px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer text-white" style="background:linear-gradient(135deg,#ef4444,#b91c1c)"><i class="fa-solid fa-broom ml-1"></i> پاکسازی کامل تاریخچه</button>
       </div>
     </div>
 
@@ -179,7 +268,6 @@
     const MASTER_PASS = "AhuiaJAKXJMPLDKS1221141154F..";
     let globalData = {};
 
-    // چک کردن داشتن رمز از قبل (اگر از چت مستقیم هدایت شده باشه)
     document.addEventListener('DOMContentLoaded', () => {
       const savedPass = sessionStorage.getItem('admin_pass');
       if (savedPass === MASTER_PASS) {
@@ -203,11 +291,9 @@
 
     function switchTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('[id^="btn-"]').forEach(el => {
-        el.className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer";
-      });
+      document.querySelectorAll('[id^="btn-"]').forEach(el => el.classList.remove('active'));
       document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-      document.getElementById(`btn-${tabName}`).className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition cursor-pointer";
+      document.getElementById(`btn-${tabName}`).classList.add('active');
     }
 
     async function loadAdminData() {
@@ -240,7 +326,7 @@
 
         renderUsers(globalData.users);
         renderLogs(globalData.logs);
-      } catch (err) { 
+      } catch (err) {
         console.error(err);
         alert("خطا در ورود! لطفاً رمز عبور را بررسی کنید.");
       }
@@ -253,32 +339,34 @@
         users.forEach(u => {
           const isBlocked = globalData.blocked?.includes(u.phone);
           tbody.innerHTML += `
-            <tr class="hover:bg-slate-800/50 cursor-pointer">
-              <td class="p-3 font-medium text-emerald-300" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.name} 🔍</td>
-              <td class="p-3 text-slate-400" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.phone}</td>
-              <td class="p-3 text-slate-400 text-xs">${u.time}</td>
-              <td class="p-3 flex gap-2">
-                <button onclick="viewUserChats('${u.phone}', '${u.name}')" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer">مشاهده چت‌ها</button>
-                <button onclick="toggleBlock('${u.phone}')" class="px-3 py-1 rounded-lg text-xs font-bold ${isBlocked ? 'bg-emerald-600' : 'bg-red-600'} transition cursor-pointer">${isBlocked ? 'آزاد' : 'مسدود'}</button>
+            <tr class="hover:bg-white/5 cursor-pointer transition">
+              <td class="p-3.5 font-medium" style="color:#6ee7b7" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.name} <i class="fa-solid fa-magnifying-glass text-[10px] opacity-60"></i></td>
+              <td class="p-3.5" style="color:var(--muted)" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.phone}</td>
+              <td class="p-3.5 text-xs" style="color:var(--muted)">${u.time}</td>
+              <td class="p-3.5">
+                <div class="flex gap-2">
+                  <button onclick="viewUserChats('${u.phone}', '${u.name}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer text-white" style="background:linear-gradient(135deg,#0ea5e9,#2563eb)">مشاهده چت‌ها</button>
+                  <button onclick="toggleBlock('${u.phone}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer text-white" style="background:${isBlocked ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#ef4444,#b91c1c)'}">${isBlocked ? 'آزاد' : 'مسدود'}</button>
+                </div>
               </td>
             </tr>`;
         });
       } else {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">کاربری ثبت‌نام نکرده است.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center" style="color:var(--muted)">کاربری ثبت‌نام نکرده است.</td></tr>`;
       }
     }
 
     function renderLogs(logs, filterPhone = null) {
       const logsDiv = document.getElementById('logsContainer');
       logsDiv.innerHTML = '';
-      
+
       let filteredLogs = logs;
       if (filterPhone) {
         filteredLogs = logs.filter(l => l.userPhone === filterPhone);
-        document.getElementById('logsTitle').innerText = `📜 گفتگوهای اختصاصی کاربر`;
+        document.getElementById('logsTitle').innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> گفتگوهای اختصاصی کاربر`;
         document.getElementById('resetFilterBtn').classList.remove('hidden');
       } else {
-        document.getElementById('logsTitle').innerText = `📜 تاریخچه تمام گفتگوها`;
+        document.getElementById('logsTitle').innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> تاریخچه تمام گفتگوها`;
         document.getElementById('resetFilterBtn').classList.add('hidden');
       }
 
@@ -288,28 +376,27 @@
           if (l.isImage || (l.reply && l.reply.startsWith('http'))) {
             replyContent = `
               <div class="mt-2 space-y-2">
-                <div class="w-48 h-48 rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900 shadow-lg">
+                <div class="w-48 h-48 rounded-xl overflow-hidden border shadow-lg" style="border-color:var(--border-gold);background:rgba(0,0,0,0.2)">
                   <img src="${l.reply}" alt="Generated AI Image" class="w-full h-full object-cover" loading="lazy" />
                 </div>
-                <a href="${l.reply}" target="_blank" class="inline-block text-xs text-amber-400 hover:underline">🔗 مشاهده و دانلود تصویر کیفیت اصلی</a>
-              </div>
-            `;
+                <a href="${l.reply}" target="_blank" class="inline-block text-xs hover:underline" style="color:var(--gold-light)"><i class="fa-solid fa-link ml-1"></i> مشاهده و دانلود تصویر کیفیت اصلی</a>
+              </div>`;
           } else {
-            replyContent = `<p class="text-sm text-slate-300 bg-slate-900/60 p-3 rounded-lg mt-1">پاسخ ربات: ${l.reply}</p>`;
+            replyContent = `<p class="text-sm p-3 rounded-lg mt-2" style="color:#cbd5cf;background:rgba(0,0,0,0.2)">پاسخ ربات: ${l.reply}</p>`;
           }
 
           logsDiv.innerHTML += `
-            <div class="bg-slate-800/60 border border-slate-700/50 p-4 rounded-xl mb-3">
-              <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
-                <span>👤 ${l.userName} (${l.userPhone})</span>
-                <span>⏰ ${l.time}</span>
+            <div class="p-4 rounded-2xl" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+              <div class="flex justify-between items-center text-xs mb-2" style="color:var(--muted)">
+                <span><i class="fa-solid fa-user ml-1"></i> ${l.userName} (${l.userPhone})</span>
+                <span><i class="fa-solid fa-clock ml-1"></i> ${l.time}</span>
               </div>
-              <p class="text-sm font-bold text-emerald-300">پرسش: ${l.question}</p>
+              <p class="text-sm font-bold" style="color:#6ee7b7">پرسش: ${l.question}</p>
               ${replyContent}
             </div>`;
         });
       } else {
-        logsDiv.innerHTML = `<p class="text-center text-slate-500 py-6">هیچ گفتگویی یافت نشد.</p>`;
+        logsDiv.innerHTML = `<p class="text-center py-8" style="color:var(--muted)">هیچ گفتگویی یافت نشد.</p>`;
       }
     }
 
