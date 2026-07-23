@@ -146,7 +146,27 @@ async function handleUserMessage() {
         return;
     }
 
-    const aiBubble = appendMessage(isImageMode ? "🎨 در حال ترجمه پرامپت و تولید تصویر با کیفیت بالا..." : "در حال پردازش و استعلام پاسخ معتبر...", "ai");
+    // اگر حالت تصویرساز بود، ابتدا کادر مربعی چت‌جی‌پاتی جای‌گذاری می‌شود
+    let aiBubble;
+    if (isImageMode) {
+        aiBubble = appendMessage("", "ai");
+        aiBubble.innerHTML = `
+            <div class="space-y-3 w-full max-w-[320px] sm:max-w-[380px]">
+                <p class="text-xs text-amber-300 font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-spinner animate-spin"></i>
+                    در حال خلق تصویر با هوش مصنوعی...
+                </p>
+                <!-- کادر مربعی با افکت لودینگ چت‌جی‌پاتی -->
+                <div id="imgPlaceholder" class="relative w-full aspect-square rounded-2xl bg-slate-800/80 border border-white/10 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
+                    <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400/50 animate-bounce mb-3"></i>
+                    <span class="text-xs text-slate-400 font-medium animate-pulse">لطفاً چند ثانیه شکیبا باشید...</span>
+                </div>
+            </div>
+        `;
+    } else {
+        aiBubble = appendMessage("در حال پردازش و استعلام پاسخ معتبر...", "ai");
+    }
 
     try {
         const res = await fetch("/api/chat", {
@@ -162,18 +182,35 @@ async function handleUserMessage() {
         const data = await res.json();
 
         if (data.isImage && data.imageUrl) {
-            // ساخت لایه نمایش تصویر همراه با دکمه دانلود
+            const imgId = "img_" + Math.random().toString(36).substring(2, 9);
+            
+            // جایگزینی کادر لودینگ مربعی با تصویر اصلی
             aiBubble.innerHTML = `
-                <div class="space-y-3">
-                    <p class="text-xs text-amber-300 font-bold">✨ تصویر تولید شده بر اساس پرامپت شما:</p>
-                    <div class="relative group rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black/40">
-                        <img src="${data.imageUrl}" alt="Generated Image" class="w-full h-auto max-h-[400px] object-cover rounded-xl" loading="lazy"/>
+                <div class="space-y-3 w-full max-w-[320px] sm:max-w-[380px]">
+                    <p class="text-xs text-amber-300 font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-sparkles text-amber-400"></i>
+                        تصویر تولید شده با آوای یقین:
+                    </p>
+                    
+                    <!-- کادر مربعی چت‌جی‌پاتی برای تصویر -->
+                    <div class="relative w-full aspect-square rounded-2xl bg-slate-900 border border-amber-500/20 overflow-hidden shadow-2xl group">
+                        <!-- تصویر واقعی -->
+                        <img id="${imgId}" src="${data.imageUrl}" alt="Generated AI Image" class="w-full h-full object-cover rounded-2xl transition duration-500 hover:scale-105" 
+                             onload="document.getElementById('${imgId}_loader').style.display='none'"
+                             onerror="this.src='https://via.placeholder.com/512?text=Error+Loading+Image'"/>
+                        
+                        <!-- انیمیشن لودینگ روی خود عکس تا زمان لود کامل مرورگر -->
+                        <div id="${imgId}_loader" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-notch animate-spin text-amber-400 text-2xl"></i>
+                            <span class="text-[11px] text-slate-400">در حال دریافت پیکسل‌ها...</span>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-2 pt-1">
+
+                    <div class="flex items-center justify-between gap-2 pt-1 bg-black/20 p-2.5 rounded-xl border border-white/5">
                         <span class="text-[10px] text-slate-400 truncate max-w-[200px]" title="${data.translatedPrompt}">🔤 ${data.translatedPrompt}</span>
-                        <a href="${data.imageUrl}" target="_blank" download="avaye-yaghin-image.jpg" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
-                            <i class="fa-solid fa-download"></i> دانلود تصویر
-                        </a>
+                        <button onclick="downloadImage('${data.imageUrl}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-lg cursor-pointer">
+                            <i class="fa-solid fa-download text-xs"></i> دانلود
+                        </button>
                     </div>
                 </div>
             `;
@@ -182,6 +219,26 @@ async function handleUserMessage() {
         }
     } catch (err) {
         aiBubble.innerText = "خطا در ارتباط با سرور ابری. لطفاً اتصال خود را بررسی کنید.";
+    }
+}
+
+// تابع اختصاصی دانلود تصویر بدون مشکل CORS
+async function downloadImage(url) {
+    try {
+        showToast("در حال آماده‌سازی فایل دانلود...");
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `avaye-yaghin-${Date.now()}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        showToast("دانلود با موفقیت انجام شد!");
+    } catch (error) {
+        window.open(url, "_blank");
     }
 }
 
