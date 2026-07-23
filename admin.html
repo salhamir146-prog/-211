@@ -72,7 +72,6 @@
           <textarea id="adminNotes" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
         </div>
 
-        <!-- بخش انتخاب مدل هوش مصنوعی (گروگ + اوپن‌روتر) -->
         <div>
           <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب ارائه دهنده و مدل هوش مصنوعی:</label>
           <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
@@ -106,8 +105,32 @@
         </div>
       </div>
 
+      <!-- تنظیمات گوینده صوتی -->
+      <div class="mt-6 p-4 bg-slate-800/40 border border-slate-700/40 rounded-xl space-y-3">
+        <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+          <span>🔊</span> تنظیمات گوینده صوتی پاسخ‌ها (Text-To-Speech)
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-1 text-slate-300">جنسیت و لحن گوینده:</label>
+            <select id="voiceGender" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="female">زن (آرام و روان)</option>
+              <option value="male">مرد (رسمی)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1 text-slate-300">سرعت خوانش گوینده:</label>
+            <select id="voiceSpeed" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="1">عادی (1x)</option>
+              <option value="0.85">آرام (0.85x)</option>
+              <option value="1.15">سریع (1.15x)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <!-- گزینه فعال‌سازی ربات -->
-      <div class="mt-6 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+      <div class="mt-4 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
         <input type="checkbox" id="botActive" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
         <label for="botActive" class="text-sm font-medium cursor-pointer">فعال بودن ربات پاسخگو</label>
       </div>
@@ -207,6 +230,9 @@
           document.getElementById('maxTokens').value = globalData.settings.maxTokens ?? 1024;
           document.getElementById('botActive').checked = globalData.settings.botActive ?? true;
           document.getElementById('imageGenEnabled').checked = globalData.settings.imageGenEnabled ?? false;
+          
+          document.getElementById('voiceGender').value = globalData.settings.voiceGender || 'female';
+          document.getElementById('voiceSpeed').value = globalData.settings.voiceSpeed || '1';
         }
 
         renderUsers(globalData.users);
@@ -299,7 +325,9 @@
         temperature: parseFloat(document.getElementById('temperature').value),
         maxTokens: parseInt(document.getElementById('maxTokens').value),
         botActive: document.getElementById('botActive').checked,
-        imageGenEnabled: document.getElementById('imageGenEnabled').checked
+        imageGenEnabled: document.getElementById('imageGenEnabled').checked,
+        voiceGender: document.getElementById('voiceGender').value,
+        voiceSpeed: document.getElementById('voiceSpeed').value
       };
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
