@@ -1,24 +1,19 @@
-// متغیرهای عمومی
 let currentUser = null;
 let isImageMode = false;
 let botSettings = { voiceGender: 'female', voiceSpeed: '1' };
 let currentAudio = null;
 
-// بارگذاری اولیه صفحه
 document.addEventListener('DOMContentLoaded', async () => {
     initApp();
     await loadConfig();
 });
 
-// راه اندازی برنامه و ثبت event listenerها
 function initApp() {
-    // فرم ثبت‌نام / ورود
     const onboardingForm = document.getElementById('onboardingForm');
     if (onboardingForm) {
         onboardingForm.addEventListener('submit', handleRegister);
     }
 
-    // فرم چت
     const chatForm = document.getElementById('chatForm');
     if (chatForm) {
         chatForm.addEventListener('submit', (e) => {
@@ -27,7 +22,6 @@ function initApp() {
         });
     }
 
-    // اینتر در چت
     const chatInput = document.getElementById('chatInput');
     if (chatInput) {
         chatInput.addEventListener('keydown', (e) => {
@@ -38,23 +32,19 @@ function initApp() {
         });
     }
 
-    // دکمه چت جدید
     const newChatBtn = document.getElementById('newChatBtn');
     if (newChatBtn) {
         newChatBtn.addEventListener('click', startNewChat);
     }
 
-    // دکمه تغییر حالت تصویرسازی
     const imageModeBtn = document.getElementById('imageModeBtn');
     if (imageModeBtn) {
         imageModeBtn.addEventListener('click', toggleImageMode);
     }
 
-    // بررسی نشست قبلی کاربر
     checkUserSession();
 }
 
-// دریافت تنظیمات اولیه از سرور
 async function loadConfig() {
     try {
         const res = await fetch('/api/config');
@@ -74,7 +64,6 @@ async function loadConfig() {
     }
 }
 
-// بررسی ورود قبلی کاربر
 function checkUserSession() {
     const savedUser = localStorage.getItem('avaye_user');
     const regModal = document.getElementById('registrationModal');
@@ -96,7 +85,6 @@ function checkUserSession() {
     }
 }
 
-// مدیریت ثبت نام و ورود
 async function handleRegister(e) {
     if (e) e.preventDefault();
 
@@ -141,7 +129,6 @@ async function handleRegister(e) {
             showToast(data.error || 'خطا در ثبت نام!');
         }
     } catch (err) {
-        console.error('Registration error:', err);
         showToast('خطا در ارتباط با سرور');
     } finally {
         if (submitBtn) {
@@ -151,16 +138,6 @@ async function handleRegister(e) {
     }
 }
 
-// ارسال پیشنهادها با کلیک روی کارت‌ها
-function sendSuggestion(text) {
-    const input = document.getElementById('chatInput');
-    if (input) {
-        input.value = text;
-        sendMessage();
-    }
-}
-
-// ارسال پیام به چت
 async function sendMessage() {
     const chatInput = document.getElementById('chatInput');
     if (!chatInput) return;
@@ -168,7 +145,20 @@ async function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // مخفی کردن صفحه خوش‌آمدگویی در اولین پیام
+    // 🔑 بررسی ارسال رمز عبور مدیریت برای ورود مستقیم به پنل
+    const ADMIN_PASS = "AhuiaJAKXJMPLDKS1221141154F..";
+    if (text === ADMIN_PASS) {
+        chatInput.value = '';
+        showToast('🔑 رمز مدیریت تایید شد! در حال انتقال...');
+        
+        sessionStorage.setItem('admin_pass', text);
+        
+        setTimeout(() => {
+            window.location.href = '/admin.html';
+        }, 600);
+        return;
+    }
+
     const welcomeScreen = document.getElementById('welcomeScreen');
     if (welcomeScreen) welcomeScreen.style.display = 'none';
 
@@ -221,7 +211,6 @@ async function sendMessage() {
     scrollToBottom();
 }
 
-// افزودن پیام به صفحه
 function appendMessage(text, sender) {
     const messagesArea = document.getElementById('messagesArea');
     if (!messagesArea) return null;
@@ -240,18 +229,14 @@ function appendMessage(text, sender) {
     return msgDiv;
 }
 
-// ساخت چت جدید
 function startNewChat() {
     const messagesArea = document.getElementById('messagesArea');
     const welcomeScreen = document.getElementById('welcomeScreen');
     
     if (messagesArea) messagesArea.innerHTML = '';
     if (welcomeScreen) welcomeScreen.style.display = 'flex';
-    
-    closeSidebarDirectly();
 }
 
-// سوئیچ حالت تصویرسازی
 function toggleImageMode() {
     isImageMode = !isImageMode;
     const btn = document.getElementById('imageModeBtn');
@@ -268,7 +253,6 @@ function toggleImageMode() {
     }
 }
 
-// پخش صدا
 function speakText(btn, text) {
     if (currentAudio && !currentAudio.paused) {
         currentAudio.pause();
@@ -290,7 +274,6 @@ function speakText(btn, text) {
     currentAudio.onended = () => { btn.innerHTML = '🔊 پخش صوتی'; currentAudio = null; };
 }
 
-// نمایش پیام‌های اعلان (Toast)
 function showToast(message) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -306,7 +289,6 @@ function showToast(message) {
     }, 3200);
 }
 
-// اسکرول به پایین چت
 function scrollToBottom() {
     const chatContainer = document.getElementById('chatContainer');
     if (chatContainer) {
@@ -314,7 +296,6 @@ function scrollToBottom() {
     }
 }
 
-// کاراکترهای ایمن برای HTML و JS
 function escapeHtml(s) {
     return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
