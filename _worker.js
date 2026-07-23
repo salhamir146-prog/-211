@@ -1,5 +1,5 @@
 const DEFAULT_OPENROUTER_KEY = ""; // اگر خواستی کلید OpenRouter رو می‌تونی اینجا هم بذاری
-const DEFAULT_GROQ_KEY = "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";
+const DEFAULT_GROQ_KEY =
 
 export default {
   async fetch(request, env) {
