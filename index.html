@@ -212,15 +212,16 @@
                     <label class="block text-xs text-emerald-200 mb-1.5 font-medium">نام و نام خانوادگی</label>
                     <input type="text" id="userNameInput" required placeholder="مثال: علی احمدی" class="reg-input text-sm">
                 </div>
-                <!-- کادرهای ورودی نام و شماره -->
-<input type="text" id="userNameInput" placeholder="نام و نام خانوادگی..." class="...">
-<input type="tel" id="userPhoneInput" placeholder="شماره تماس..." class="...">
-
-<!-- دکمه ورود -->
-<button onclick="handleRegister()" class="...">ورود به سامانه</button>
-
-<!-- پیام خطا (در صورت وجود) -->
-<p id="authError" class="text-red-500 text-xs mt-2 hidden"></p>
+                <div>
+                    <label class="block text-xs text-emerald-200 mb-1.5 font-medium">شماره همراه</label>
+                    <input type="tel" id="userPhoneInput" required placeholder="09123456789" dir="ltr" class="reg-input text-sm text-right">
+                </div>
+                <button type="submit" class="w-full py-4 mt-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-slate-950 font-black shadow-lg cursor-pointer transition">
+                    ورود به سامانه
+                </button>
+            </form>
+        </div>
+    </div>
 
     <div class="app-container">
         <aside id="sidebar" class="sidebar">
@@ -282,19 +283,21 @@
             </div>
 
             <div class="input-container">
-    <form id="chatForm" class="input-wrapper flex items-center gap-2">
-        <textarea id="chatInput" rows="1" placeholder="پرسش یا توصیف تصویر خود را وارد کنید..." class="chat-input"></textarea>
-        
-        <!-- دکمه حالت تصویرسازی (توسط JS وقتی ادمین فعال کرد ظاهر می‌شود) -->
-        <button type="button" id="imageModeBtn" title="ساخت تصویر با آوای یقین" class="hidden px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-amber-400/30 text-amber-300 bg-amber-400/10 hover:bg-amber-400/20">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span class="hidden sm:inline">ساخت تصویر</span>
-        </button>
+                <form id="chatForm" class="input-wrapper flex items-center gap-2">
+                    <textarea id="chatInput" rows="1" placeholder="پرسش یا توصیف تصویر خود را وارد کنید..." class="chat-input"></textarea>
+                    
+                    <!-- دکمه حالت تصویرسازی (توسط JS وقتی ادمین فعال کرد ظاهر می‌شود) -->
+                    <button type="button" id="imageModeBtn" title="ساخت تصویر با آوای یقین" class="hidden px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-amber-400/30 text-amber-300 bg-amber-400/10 hover:bg-amber-400/20">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span class="hidden sm:inline">ساخت تصویر</span>
+                    </button>
 
-        <button type="submit" class="send-btn"><i class="fa-solid fa-paper-plane text-sm"></i></button>
-    </form>
-    <div class="text-[10px] text-center text-slate-400 mt-2">طراحی و توسعه توسط امیر صالح جاودان</div>
-</div>
+                    <button type="submit" class="send-btn"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                </form>
+                <div class="text-[10px] text-center text-slate-400 mt-2">طراحی و توسعه توسط امیر صالح جاودان</div>
+            </div>
+        </main>
+    </div>
 
     <!-- اسکریپت ایزوله و مستقل برای باز و بسته شدن سایدبار در موبایل -->
     <script>
