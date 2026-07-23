@@ -72,13 +72,21 @@
           <textarea id="adminNotes" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
         </div>
         <div>
-          <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب مدل هوش مصنوعی:</label>
+          <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب ارائه دهنده و مدل هوش مصنوعی:</label>
           <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
-            <option value="openai/gpt-oss-20b">GPT-OSS 20B (رایگان)</option>
-            <option value="google/gemini-2.0-flash-001">Gemini 3.1 Flash (۳۱۴)</option>
-            <option value="meta-llama/llama-3-70b-instruct">Llama 3 (لاگونا / لاما)</option>
-            <option value="google/gemini-nano">Gemini Nano (مای نانو)</option>
-            <option value="mistralai/mistral-7b-instruct">Mistral 2 Lite (موز ۲ لایت)</option>
+            <optgroup label="⚡ کلید جدید - Groq API (سرعت فوق‌العاده بالا)">
+              <option value="groq/llama-3.3-70b-versatile">Groq: Llama 3.3 70B (پیش‌فرض و هوشمند)</option>
+              <option value="groq/llama-3.1-8b-instant">Groq: Llama 3.1 8B (سریع)</option>
+              <option value="groq/mixtral-8x7b-32768">Groq: Mixtral 8x7B</option>
+            </optgroup>
+            
+            <optgroup label="🌐 کلید قبلی - OpenRouter API">
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B (رایگان)</option>
+              <option value="google/gemini-2.0-flash-001">Gemini 3.1 Flash (۳۱۴)</option>
+              <option value="meta-llama/llama-3-70b-instruct">Llama 3 (لاگونا / لاما)</option>
+              <option value="google/gemini-nano">Gemini Nano (مای نانو)</option>
+              <option value="mistralai/mistral-7b-instruct">Mistral 2 Lite (موز ۲ لایت)</option>
+            </optgroup>
           </select>
         </div>
         <div>
@@ -190,7 +198,7 @@
         if (globalData.settings) {
           document.getElementById('systemPrompt').value = globalData.settings.systemPrompt || '';
           document.getElementById('adminNotes').value = globalData.settings.adminNotes || '';
-          document.getElementById('aiModel').value = globalData.settings.model || 'openai/gpt-oss-20b';
+          document.getElementById('aiModel').value = globalData.settings.model || 'groq/llama-3.3-70b-versatile';
           document.getElementById('welcomeMsg').value = globalData.settings.welcomeMsg || '';
           document.getElementById('temperature').value = globalData.settings.temperature ?? 0.7;
           document.getElementById('maxTokens').value = globalData.settings.maxTokens ?? 1024;
