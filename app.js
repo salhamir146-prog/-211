@@ -1,7 +1,8 @@
 let ADMIN_PASSCODE = localStorage.getItem("avaye_admin_pass") || "Amidhjsos62627@_897";
 let currentUser = null;
+let isImageModeActive = false;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const savedUser = localStorage.getItem("avaye_user");
     if (savedUser) {
         try {
@@ -13,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // استعلام فعال بودن قابلیت تصویرساز از سرور
+    checkImageGenStatus();
+
     // سایدبار موبایل
     const menuToggle = document.getElementById("menuToggle");
     const sidebar = document.getElementById("sidebar");
@@ -20,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         menuToggle.addEventListener("click", () => sidebar.classList.toggle("active"));
     }
 
-    // فرم ثبت‌نام و ارسال به سرور ابری
+    // فرم ثبت‌نام
     const onboardingForm = document.getElementById("onboardingForm");
     if (onboardingForm) {
         onboardingForm.addEventListener("submit", async (e) => {
@@ -44,6 +48,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("displayUserName").innerText = name;
                 document.getElementById("registrationModal").classList.add("hidden");
                 showToast("ورود با موفقیت انجام شد! خوش آمدید.");
+            }
+        });
+    }
+
+    // دکمه تغییر حالت ساخت تصویر
+    const imageModeBtn = document.getElementById("imageModeBtn");
+    if (imageModeBtn) {
+        imageModeBtn.addEventListener("click", () => {
+            isImageModeActive = !isImageModeActive;
+            if (isImageModeActive) {
+                imageModeBtn.classList.remove("bg-amber-400/10", "text-amber-300");
+                imageModeBtn.classList.add("bg-amber-500", "text-slate-950", "shadow-lg", "shadow-amber-500/30", "scale-105");
+                showToast("حالت ساخت تصویر فعال شد. توصیف تصویر را بنویسید.");
+            } else {
+                imageModeBtn.classList.remove("bg-amber-500", "text-slate-950", "shadow-lg", "shadow-amber-500/30", "scale-105");
+                imageModeBtn.classList.add("bg-amber-400/10", "text-amber-300");
+                showToast("حالت گفتگو متنی فعال شد.");
             }
         });
     }
@@ -86,6 +107,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+async function checkImageGenStatus() {
+    try {
+        const res = await fetch("/api/config");
+        const data = await res.json();
+        const btn = document.getElementById("imageModeBtn");
+        if (btn && data.imageGenEnabled) {
+            btn.classList.remove("hidden");
+        }
+    } catch (e) {}
+}
+
 function sendSuggestion(text) {
     const chatInput = document.getElementById("chatInput");
     if (chatInput) {
@@ -99,11 +131,13 @@ async function handleUserMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
+    const isImageMode = isImageModeActive;
     chatInput.value = "";
     document.getElementById("welcomeScreen").style.display = "none";
+    
     appendMessage(text, "user");
 
-    // بررسی رمز ادمین در چت
+    // بررسی رمز ادمین
     const currentPass = localStorage.getItem("avaye_admin_pass") || ADMIN_PASSCODE;
     if (text === currentPass || text === "Amidhjsos62627@_897") {
         appendMessage("رمز مدیریت تأیید شد. در حال انتقال به پنل مدیریت...", "ai");
@@ -112,13 +146,13 @@ async function handleUserMessage() {
         return;
     }
 
-    const aiBubble = appendMessage("در حال پردازش و استعلام پاسخ معتبر...", "ai");
+    const aiBubble = appendMessage(isImageMode ? "🎨 در حال ترجمه پرامپت و تولید تصویر با کیفیت بالا..." : "در حال پردازش و استعلام پاسخ معتبر...", "ai");
 
     try {
         const res = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text, user: currentUser })
+            body: JSON.stringify({ message: text, user: currentUser, isImageMode: isImageMode })
         });
         
         if (!res.ok) {
@@ -126,7 +160,26 @@ async function handleUserMessage() {
         }
 
         const data = await res.json();
-        aiBubble.innerText = data.reply || "پاسخی دریافت نشد.";
+
+        if (data.isImage && data.imageUrl) {
+            // ساخت لایه نمایش تصویر همراه با دکمه دانلود
+            aiBubble.innerHTML = `
+                <div class="space-y-3">
+                    <p class="text-xs text-amber-300 font-bold">✨ تصویر تولید شده بر اساس پرامپت شما:</p>
+                    <div class="relative group rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-black/40">
+                        <img src="${data.imageUrl}" alt="Generated Image" class="w-full h-auto max-h-[400px] object-cover rounded-xl" loading="lazy"/>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 pt-1">
+                        <span class="text-[10px] text-slate-400 truncate max-w-[200px]" title="${data.translatedPrompt}">🔤 ${data.translatedPrompt}</span>
+                        <a href="${data.imageUrl}" target="_blank" download="avaye-yaghin-image.jpg" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-download"></i> دانلود تصویر
+                        </a>
+                    </div>
+                </div>
+            `;
+        } else {
+            aiBubble.innerText = data.reply || "پاسخی دریافت نشد.";
+        }
     } catch (err) {
         aiBubble.innerText = "خطا در ارتباط با سرور ابری. لطفاً اتصال خود را بررسی کنید.";
     }
