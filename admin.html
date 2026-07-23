@@ -72,7 +72,7 @@
           <textarea id="adminNotes" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
         </div>
 
-        <!-- بخش انتخاب مدل هوش مصنوعی (گروگ + اوپن‌روتر) -->
+        <!-- بخش انتخاب مدل هوش مصنوعی -->
         <div>
           <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب ارائه دهنده و مدل هوش مصنوعی:</label>
           <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
@@ -168,9 +168,20 @@
     const MASTER_PASS = "AhuiaJAKXJMPLDKS1221141154F..";
     let globalData = {};
 
+    // چک کردن داشتن رمز از قبل (اگر از چت مستقیم هدایت شده باشه)
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedPass = sessionStorage.getItem('admin_pass');
+      if (savedPass === MASTER_PASS) {
+        document.getElementById('authModal').classList.add('hidden');
+        document.getElementById('adminContainer').classList.remove('hidden');
+        loadAdminData();
+      }
+    });
+
     function checkPasscode() {
       const val = document.getElementById('passcodeInput').value;
       if (val === MASTER_PASS) {
+        sessionStorage.setItem('admin_pass', val);
         document.getElementById('authModal').classList.add('hidden');
         document.getElementById('adminContainer').classList.remove('hidden');
         loadAdminData();
@@ -190,7 +201,14 @@
 
     async function loadAdminData() {
       try {
-        const res = await fetch('/api/admin/data');
+        const res = await fetch('/api/admin/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: MASTER_PASS })
+        });
+
+        if (!res.ok) throw new Error("دسترسی رد شد");
+
         globalData = await res.json();
 
         document.getElementById('statUsers').innerText = globalData.users?.length || 0;
@@ -211,7 +229,10 @@
 
         renderUsers(globalData.users);
         renderLogs(globalData.logs);
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        console.error(err);
+        alert("خطا در ورود! لطفاً رمز عبور را بررسی کنید.");
+      }
     }
 
     function renderUsers(users) {
@@ -277,7 +298,7 @@
             </div>`;
         });
       } else {
-        logsDiv.innerHTML = `<p class="text-center text-slate-500 py-6">هیچ گفتگویی برای این کاربر یافت نشد.</p>`;
+        logsDiv.innerHTML = `<p class="text-center text-slate-500 py-6">هیچ گفتگویی یافت نشد.</p>`;
       }
     }
 
@@ -292,6 +313,7 @@
 
     async function saveSettings() {
       const data = {
+        password: MASTER_PASS,
         systemPrompt: document.getElementById('systemPrompt').value,
         adminNotes: document.getElementById('adminNotes').value,
         model: document.getElementById('aiModel').value,
@@ -306,14 +328,15 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (res.ok) alert('تنظیمات با موفقیت ذخیره شد!');
+      if (res.ok) alert('تنظیمات با موفقیت در فضای ابری ذخیره شد!');
+      else alert('خطا در ذخیره‌سازی!');
     }
 
     async function toggleBlock(phone) {
       await fetch('/api/admin/block', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
+        body: JSON.stringify({ password: MASTER_PASS, phone })
       });
       loadAdminData();
     }
@@ -324,7 +347,7 @@
       await fetch('/api/admin/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        body: JSON.stringify({ password: MASTER_PASS, message })
       });
       alert('اطلاعیه ثبت شد!');
       document.getElementById('broadcastText').value = '';
@@ -332,7 +355,11 @@
 
     async function clearAllLogs() {
       if (!confirm('آیا از پاکسازی کامل تاریخچه مطمئن هستید؟')) return;
-      await fetch('/api/admin/clear-logs', { method: 'POST' });
+      await fetch('/api/admin/clear-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: MASTER_PASS })
+      });
       loadAdminData();
     }
   </script>
