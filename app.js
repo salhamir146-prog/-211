@@ -204,7 +204,7 @@ async function sendMessage() {
 
         if (data.isImage || data.imageUrl) {
             contentBox.innerHTML = `
-                <div style="margin-bottom: 8px; color: #f5df91; font-weight: bold; font-size: 13px;">🎨 تصویر تولید شده:</div>
+                <div style="margin-bottom: 8px; color: #f5df91; font-weight: bold; font-size: 13px;">🎨 تصویر با avaye yaghin تولید شد :</div>
                 <div style="width: 250px; height: 250px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(212,175,55,0.3); margin-bottom: 8px;">
                     <img src="${data.imageUrl}" alt="AI Generated" style="width: 100%; height: 100%; object-fit: cover;" />
                 </div>
