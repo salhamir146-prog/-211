@@ -248,7 +248,7 @@ function toggleImageMode() {
         showToast('حالت ساخت تصویر فعال شد');
     } else {
         if (btn) btn.style.background = 'rgba(212, 175, 55, 0.1)';
-        if (input) input.placeholder = 'پرسش خود را وارد کنید...';
+        if (input) input.placeholder = 'چه چیزی در ذهنتان است؟';
         showToast('حالت متن فعال شد');
     }
 }
