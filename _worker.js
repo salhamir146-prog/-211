@@ -92,6 +92,22 @@ export default {
           const randomSeed = Math.floor(Math.random() * 999999);
           const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(translatedPrompt)}?width=1024&height=1024&seed=${randomSeed}&nologo=true&model=flux`;
 
+          // ذخیره لاگ تصویرسازی در KV برای پنل ادمین
+          try {
+            let logs = JSON.parse(await env.AVAYE_YAGHIN_KV.get("chat_logs") || "[]");
+            logs.unshift({
+              userName: user?.name || "مهمان",
+              userPhone: user?.phone || "نامشخص",
+              question: `🎨 [درخواست تصویر]: ${message}`,
+              reply: imageUrl,
+              isImage: true,
+              translatedPrompt: translatedPrompt,
+              time: new Date().toLocaleString("fa-IR")
+            });
+            if (logs.length > 100) logs = logs.slice(0, 100);
+            await env.AVAYE_YAGHIN_KV.put("chat_logs", JSON.stringify(logs));
+          } catch (e) {}
+
           return new Response(JSON.stringify({ 
             isImage: true, 
             imageUrl: imageUrl, 
@@ -139,6 +155,7 @@ export default {
             userPhone: user?.phone || "نامشخص",
             question: message,
             reply: reply,
+            isImage: false,
             time: new Date().toLocaleString("fa-IR")
           });
           if (logs.length > 100) logs = logs.slice(0, 100);
