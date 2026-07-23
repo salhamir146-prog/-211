@@ -39,7 +39,9 @@ export default {
           settings = JSON.parse(await env.AVAYE_YAGHIN_KV.get("settings") || "{}");
         } catch (e) {}
         return new Response(JSON.stringify({ 
-          imageGenEnabled: !!settings.imageGenEnabled 
+          imageGenEnabled: !!settings.imageGenEnabled,
+          voiceGender: settings.voiceGender || "female",
+          voiceSpeed: settings.voiceSpeed || "1"
         }), { headers: corsHeaders });
       }
 
@@ -61,7 +63,6 @@ export default {
           settings = JSON.parse(await env.AVAYE_YAGHIN_KV.get("settings") || "{}");
         } catch (e) {}
 
-        // فراخوانی مستقیم کلیدها از Environment Variables کلودفلر
         const groqKey = env.GROQ_API_KEY;
         const openRouterKey = env.OPENROUTER_API_KEY;
 
@@ -182,7 +183,7 @@ export default {
           });
 
           const openRouterData = await openRouterRes.json();
-          if (!openRouterRes.ok) {
+          if (!openRouterData.ok) {
             return new Response(JSON.stringify({ error: openRouterData.error?.message || "خطا در ارتباط با OpenRouter" }), { status: 500, headers: corsHeaders });
           }
           reply = openRouterData.choices?.[0]?.message?.content || "پاسخی از سرور دریافت نشد.";
