@@ -1,305 +1,321 @@
-let currentUser = null;
-let isImageMode = false;
-let botSettings = { voiceGender: 'female', voiceSpeed: '1' };
-let currentAudio = null;
+// ==========================================
+// 1. متغیرهای عمومی و پیکربندی اولیه
+// ==========================================
+let currentUserId = null;
+let currentUserName = '';
+let currentUserPhone = '';
+let botSettings = {
+    botActive: true,
+    imageGenEnabled: false,
+    welcomeMsg: 'سلام! چطور می‌تونم کمکتون کنم؟',
+    voiceSpeed: 1
+};
 
+// ==========================================
+// 2. مقداردهی اولیه پس از بارگذاری صفحه
+// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
-    initApp();
-    await loadConfig();
+    // بررسی وجود اطلاعات کاربر در حافظه محلی
+    const savedUser = localStorage.getItem('app_user');
+    if (savedUser) {
+        const user = JSON.parse(savedUser);
+        currentUserPhone = user.phone;
+        currentUserName = user.name;
+        showChatScreen();
+    } else {
+        showAuthScreen();
+    }
+
+    // دریافت آخرین تنظیمات ربات از سرور
+    await fetchBotSettings();
 });
 
-function initApp() {
-    const onboardingForm = document.getElementById('onboardingForm');
-    if (onboardingForm) {
-        onboardingForm.addEventListener('submit', handleRegister);
-    }
-
-    const chatForm = document.getElementById('chatForm');
-    if (chatForm) {
-        chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            sendMessage();
-        });
-    }
-
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-
-    const newChatBtn = document.getElementById('newChatBtn');
-    if (newChatBtn) {
-        newChatBtn.addEventListener('click', startNewChat);
-    }
-
-    const imageModeBtn = document.getElementById('imageModeBtn');
-    if (imageModeBtn) {
-        imageModeBtn.addEventListener('click', toggleImageMode);
-    }
-
-    checkUserSession();
-}
-
-async function loadConfig() {
+// ==========================================
+// 3. دریافت تنظیمات سیستم از Worker
+// ==========================================
+async function fetchBotSettings() {
     try {
-        const res = await fetch('/api/config');
+        const res = await fetch('/api/settings');
         if (res.ok) {
-            botSettings = await res.json();
-            const imgBtn = document.getElementById('imageModeBtn');
-            if (imgBtn) {
-                if (botSettings.imageGenEnabled) {
-                    imgBtn.classList.remove('hidden');
-                } else {
-                    imgBtn.classList.add('hidden');
-                }
-            }
-        }
-    } catch (e) {
-        console.error('تنظیمات دریافت نشد:', e);
-    }
-}
-
-function checkUserSession() {
-    const savedUser = localStorage.getItem('avaye_user');
-    const regModal = document.getElementById('registrationModal');
-    
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            if (regModal) regModal.style.display = 'none';
+            const data = await res.json();
+            botSettings = { ...botSettings, ...data };
             
-            const displayUser = document.getElementById('displayUserName');
-            if (displayUser) {
-                displayUser.innerText = currentUser.name || 'کاربر';
+            // نمایش پیام خوش‌آمدگویی در صورت خالی بودن چت
+            const chatContainer = document.getElementById('chatContainer');
+            if (chatContainer && chatContainer.children.length === 0 && botSettings.welcomeMsg) {
+                appendMessage('bot', botSettings.welcomeMsg);
             }
-        } catch (e) {
-            if (regModal) regModal.style.display = 'flex';
         }
-    } else {
-        if (regModal) regModal.style.display = 'flex';
+    } catch (err) {
+        console.error('خطا در دریافت تنظیمات ربات:', err);
     }
 }
 
-async function handleRegister(e) {
+// ==========================================
+// 4. مدیریت احراز هویت و ورود کاربر
+// ==========================================
+function handleLogin(e) {
     if (e) e.preventDefault();
-
+    
     const nameInput = document.getElementById('userNameInput');
     const phoneInput = document.getElementById('userPhoneInput');
-    const submitBtn = e ? e.target.querySelector('button[type="submit"]') : null;
 
     const name = nameInput ? nameInput.value.trim() : '';
     const phone = phoneInput ? phoneInput.value.trim() : '';
 
     if (!name || !phone) {
-        showToast('لطفاً نام و شماره همراه را وارد کنید');
+        alert('لطفاً نام و شماره تماس خود را وارد کنید.');
         return;
     }
 
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerText = 'در حال ورود...';
-    }
+    const userData = { name, phone, loginTime: new Date().toLocaleString('fa-IR') };
+    localStorage.setItem('app_user', JSON.stringify(userData));
 
-    try {
-        const res = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, phone })
-        });
+    currentUserName = name;
+    currentUserPhone = phone;
 
-        const data = await res.json();
+    // ثبت کاربر در سرور
+    fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+    }).catch(err => console.error('خطا در ثبت کاربر:', err));
 
-        if (res.ok && data.success) {
-            currentUser = { name, phone };
-            localStorage.setItem('avaye_user', JSON.stringify(currentUser));
-            
-            const regModal = document.getElementById('registrationModal');
-            if (regModal) regModal.style.display = 'none';
-
-            const displayUser = document.getElementById('displayUserName');
-            if (displayUser) displayUser.innerText = name;
-
-            showToast('با موفقیت وارد شدید');
-        } else {
-            showToast(data.error || 'خطا در ثبت نام!');
-        }
-    } catch (err) {
-        showToast('خطا در ارتباط با سرور');
-    } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'ورود به سامانه';
-        }
-    }
+    showChatScreen();
 }
 
+function showAuthScreen() {
+    const authEl = document.getElementById('authScreen');
+    const chatEl = document.getElementById('chatScreen');
+    if (authEl) authEl.classList.remove('hidden');
+    if (chatEl) chatEl.classList.add('hidden');
+}
+
+function showChatScreen() {
+    const authEl = document.getElementById('authScreen');
+    const chatEl = document.getElementById('chatScreen');
+    if (authEl) authEl.classList.add('hidden');
+    if (chatEl) chatEl.classList.remove('hidden');
+}
+
+// ==========================================
+// 5. ارسال پیام و دریافت پاسخ از هوش مصنوعی
+// ==========================================
 async function sendMessage() {
-    const chatInput = document.getElementById('chatInput');
-    if (!chatInput) return;
+    const inputEl = document.getElementById('userInput');
+    if (!inputEl) return;
 
-    const text = chatInput.value.trim();
-    if (!text) return;
+    const message = inputEl.value.trim();
+    if (!message) return;
 
-    // 🔑 بررسی ارسال رمز عبور مدیریت برای ورود مستقیم به پنل
-    const ADMIN_PASS = "AhuiaJAKXJMPLDKS1221141154F..";
-    if (text === ADMIN_PASS) {
-        chatInput.value = '';
-        showToast('🔑 رمز مدیریت تایید شد! در حال انتقال...');
-        
-        sessionStorage.setItem('admin_pass', text);
-        
-        setTimeout(() => {
-            window.location.href = '/admin.html';
-        }, 600);
+    if (!botSettings.botActive) {
+        alert('در حال حاضر سیستم پاسخگویی موقتاً غیرفعال است.');
         return;
     }
 
-    const welcomeScreen = document.getElementById('welcomeScreen');
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
+    // نمایش پیام کاربر در صفحه
+    appendMessage('user', message);
+    inputEl.value = '';
 
-    appendMessage(text, 'user');
-    chatInput.value = '';
-
-    const botMessageElement = appendMessage('در حال بررسی و پاسخگویی... ⏳', 'ai');
+    // نمایش حالت در حال تایپ
+    const loadingId = appendLoadingBubble();
 
     try {
-        const res = await fetch('/api/chat', {
+        const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: text,
-                user: currentUser,
-                isImageMode: isImageMode
+                message: message,
+                userName: currentUserName,
+                userPhone: currentUserPhone
             })
         });
 
-        const data = await res.json();
+        removeLoadingBubble(loadingId);
 
-        if (!res.ok) {
-            botMessageElement.querySelector('.message-content').innerHTML = `<span style="color: #f87171;">⚠️ ${data.error || 'خطا در دریافت پاسخ'}</span>`;
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.message || 'خطا در دریافت پاسخ از سرور');
+        }
+
+        const data = await response.json();
+        
+        // اگر پاسخ تصویر باشد یا متن عادی
+        if (data.isImage || (data.reply && data.reply.startsWith('http'))) {
+            appendImageMessage('bot', data.reply);
+        } else {
+            appendMessage('bot', data.reply);
+        }
+
+    } catch (err) {
+        removeLoadingBubble(loadingId);
+        console.error('خطا در ارسال پیام:', err);
+        appendMessage('bot', '⚠️ متأسفانه مشکلی در برقراری ارتباط پیش آمد. لطفاً دوباره تلاش کنید.');
+    }
+}
+
+// ==========================================
+// 6. رندر پیام‌ها در رابط کاربری (UI)
+// ==========================================
+function appendMessage(sender, text) {
+    const container = document.getElementById('chatContainer');
+    if (!container) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'} mb-4`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `max-w-[85%] md:max-w-[70%] p-3.5 rounded-2xl text-sm leading-relaxed ${
+        sender === 'user' 
+            ? 'bg-emerald-600 text-white rounded-br-none shadow-md' 
+            : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700/60 shadow-md'
+    }`;
+
+    // تمیزسازی متن
+    const formattedText = escapeHtml(text).replace(/\n/g, '<br>');
+    bubble.innerHTML = `<div>${formattedText}</div>`;
+
+    // افزودن دکمه پخش صوتی فقط برای پاسخ‌های ربات
+    if (sender === 'bot') {
+        const ttsBtn = document.createElement('button');
+        ttsBtn.className = 'mt-2 text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-slate-900/50 px-2.5 py-1 rounded-lg border border-slate-700/40 transition cursor-pointer';
+        ttsBtn.innerHTML = '🔊 پخش صوتی';
+        ttsBtn.onclick = function() { speakText(ttsBtn, text); };
+        bubble.appendChild(ttsBtn);
+    }
+
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendImageMessage(sender, imageUrl) {
+    const container = document.getElementById('chatContainer');
+    if (!container) return;
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'} mb-4`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'max-w-[85%] md:max-w-[70%] p-2 rounded-2xl bg-slate-800 border border-slate-700/60 shadow-md';
+
+    bubble.innerHTML = `
+        <div class="w-64 h-64 rounded-xl overflow-hidden bg-slate-900 relative">
+            <img src="${imageUrl}" alt="تصویر تولید شده" class="w-full h-full object-cover" loading="lazy" />
+        </div>
+        <a href="${imageUrl}" target="_blank" download class="block text-center text-xs text-amber-400 hover:underline mt-2 p-1">
+            📥 دانلود تصویر کیفیت اصلی
+        </a>
+    `;
+
+    msgDiv.appendChild(bubble);
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendLoadingBubble() {
+    const container = document.getElementById('chatContainer');
+    if (!container) return null;
+
+    const id = 'loading-' + Date.now();
+    const msgDiv = document.createElement('div');
+    msgDiv.id = id;
+    msgDiv.className = 'flex flex-col items-start mb-4';
+
+    msgDiv.innerHTML = `
+        <div class="bg-slate-800 text-slate-400 p-3.5 rounded-2xl rounded-bl-none border border-slate-700/60 text-xs flex items-center gap-2">
+            <span class="animate-pulse">⏳ در حال پردازش و پاسخگویی...</span>
+        </div>
+    `;
+
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeLoadingBubble(id) {
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+// ==========================================
+// 7. تابع پخش صوتی فارسی (کامل و اصلاح‌شده برای کروم)
+// ==========================================
+function speakText(btn, text) {
+    if (!text) return;
+
+    // پاک‌سازی کلمات و حذف کاراکترهای ناشناخته/ایموجی‌ها
+    const cleanText = text
+        .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
+        .replace(/[*_#`~]/g, '')
+        .trim();
+
+    if (!cleanText) return;
+
+    // پشتیبانی از ResponsiveVoice در صورت وجود در صفحه
+    if (typeof responsiveVoice !== 'undefined') {
+        if (responsiveVoice.isPlaying()) {
+            responsiveVoice.cancel();
+            if (btn) btn.innerHTML = '🔊 پخش صوتی';
             return;
         }
 
-        const contentBox = botMessageElement.querySelector('.message-content');
-
-        if (data.isImage || data.imageUrl) {
-            contentBox.innerHTML = `
-                <div style="margin-bottom: 8px; color: #f5df91; font-weight: bold; font-size: 13px;">🎨 تصویر تولید شده:</div>
-                <div style="width: 250px; height: 250px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(212,175,55,0.3); margin-bottom: 8px;">
-                    <img src="${data.imageUrl}" alt="AI Generated" style="width: 100%; height: 100%; object-fit: cover;" />
-                </div>
-                <a href="${data.imageUrl}" target="_blank" style="color: #f5df91; font-size: 12px; text-decoration: underline;">🔗 دانلود کیفیت اصلی</a>
-            `;
-        } else {
-            const reply = data.reply || 'پاسخی یافت نشد.';
-            contentBox.innerHTML = `
-                <div>${escapeHtml(reply)}</div>
-                <button onclick="speakText(this, \`${escapeJs(reply)}\`)" style="margin-top: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #f5df91; padding: 4px 10px; border-radius: 10px; font-size: 11px; cursor: pointer;">
-                    🔊 پخش صوتی
-                </button>
-            `;
-        }
-    } catch (err) {
-        botMessageElement.querySelector('.message-content').innerHTML = `<span style="color: #f87171;">⚠️ خطا در برقراری ارتباط با سرور.</span>`;
-    }
-
-    scrollToBottom();
-}
-
-function appendMessage(text, sender) {
-    const messagesArea = document.getElementById('messagesArea');
-    if (!messagesArea) return null;
-
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `message ${sender}`;
-
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.innerText = text;
-
-    msgDiv.appendChild(contentDiv);
-    messagesArea.appendChild(msgDiv);
-
-    scrollToBottom();
-    return msgDiv;
-}
-
-function startNewChat() {
-    const messagesArea = document.getElementById('messagesArea');
-    const welcomeScreen = document.getElementById('welcomeScreen');
-    
-    if (messagesArea) messagesArea.innerHTML = '';
-    if (welcomeScreen) welcomeScreen.style.display = 'flex';
-}
-
-function toggleImageMode() {
-    isImageMode = !isImageMode;
-    const btn = document.getElementById('imageModeBtn');
-    const input = document.getElementById('chatInput');
-
-    if (isImageMode) {
-        if (btn) btn.style.background = 'rgba(212, 175, 55, 0.3)';
-        if (input) input.placeholder = 'توصیف تصویر درخواستی خود را بنویسید... 🎨';
-        showToast('حالت ساخت تصویر فعال شد');
-    } else {
-        if (btn) btn.style.background = 'rgba(212, 175, 55, 0.1)';
-        if (input) input.placeholder = 'پرسش یا توصیف تصویر خود را وارد کنید...';
-        showToast('حالت متن فعال شد');
-    }
-}
-
-function speakText(btn, text) {
-    if (currentAudio && !currentAudio.paused) {
-        currentAudio.pause();
-        currentAudio = null;
-        btn.innerHTML = '🔊 پخش صوتی';
+        if (btn) btn.innerHTML = '⏹️ توقف پخش';
+        responsiveVoice.speak(cleanText, "Iranian Female", {
+            rate: botSettings.voiceSpeed || 1,
+            onend: () => { if (btn) btn.innerHTML = '🔊 پخش صوتی'; },
+            onerror: () => { if (btn) btn.innerHTML = '🔊 پخش صوتی'; }
+        });
         return;
     }
 
-    const clean = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
-    if (!clean) return;
+    // استفاده از Web Speech API استاندارد مرورگر
+    if ('speechSynthesis' in window) {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            if (btn) btn.innerHTML = '🔊 پخش صوتی';
+            return;
+        }
 
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(clean.substring(0, 300))}&tl=fa&client=tw-ob`;
-    currentAudio = new Audio(url);
-    currentAudio.playbackRate = parseFloat(botSettings.voiceSpeed || 1);
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'fa-IR';
+        utterance.rate = botSettings.voiceSpeed || 0.9;
 
-    btn.innerHTML = '⏹️ توقف';
+        if (btn) btn.innerHTML = '⏹️ در حال پخش...';
 
-    currentAudio.play().catch(() => { btn.innerHTML = '🔊 پخش صوتی'; });
-    currentAudio.onended = () => { btn.innerHTML = '🔊 پخش صوتی'; currentAudio = null; };
-}
+        utterance.onend = () => {
+            if (btn) btn.innerHTML = '🔊 پخش صوتی';
+        };
 
-function showToast(message) {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
+        utterance.onerror = (e) => {
+            console.error('خطا در TTS:', e);
+            if (btn) btn.innerHTML = '🔊 پخش صوتی';
+            showToast('⚠️ موتور صوتی فارسی در مرورگر شما یافت نشد.');
+        };
 
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.innerText = message;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 3200);
-}
-
-function scrollToBottom() {
-    const chatContainer = document.getElementById('chatContainer');
-    if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+        window.speechSynthesis.speak(utterance);
+    } else {
+        showToast('⚠️ مرورگر شما امکان پخش صوتی را پشتیبانی نمی‌کند.');
     }
 }
 
-function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+// ==========================================
+// 8. ابزارهای کمکی (Utility Functions)
+// ==========================================
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-function escapeJs(s) {
-    return s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-4 py-2.5 rounded-xl border border-slate-700 shadow-xl z-50 transition-all';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
 }
