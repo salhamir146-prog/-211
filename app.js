@@ -1,254 +1,274 @@
-let ADMIN_PASSCODE = localStorage.getItem("avaye_admin_pass") || "Amidhjsos62627@_897";
+// متغیرهای عمومی سیستم
 let currentUser = null;
-let isImageModeActive = false;
+let isImageMode = false;
+let botSettings = { voiceGender: 'female', voiceSpeed: '1' };
+let currentAudio = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const savedUser = localStorage.getItem("avaye_user");
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            document.getElementById("displayUserName").innerText = currentUser.name;
-            document.getElementById("registrationModal").classList.add("hidden");
-        } catch (e) {
-            localStorage.removeItem("avaye_user");
+// ۱. بارگذاری اولیه و تنظیمات
+window.onload = async function () {
+  checkUserSession();
+  await loadConfig();
+};
+
+// دریافت کانفیگ از سرور (جهت تنظیمات صدا و تصویرساز)
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      botSettings = await res.json();
+      const imgBtn = document.getElementById('imageModeToggle');
+      if (imgBtn) {
+        if (botSettings.imageGenEnabled) {
+          imgBtn.classList.remove('hidden');
+        } else {
+          imgBtn.classList.add('hidden');
         }
+      }
     }
+  } catch (e) {
+    console.error('خطا در دریافت تنظیمات اولیه:', e);
+  }
+}
 
-    checkImageGenStatus();
+// بررسی وضعیت ورود کاربر از حافظه مرورگر
+function checkUserSession() {
+  const savedUser = localStorage.getItem('avaye_user');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    showChatInterface();
+  } else {
+    showAuthModal();
+  }
+}
 
-    const menuToggle = document.getElementById("menuToggle");
-    const sidebar = document.getElementById("sidebar");
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener("click", () => sidebar.classList.toggle("active"));
+// ثبت‌نام / ورود کاربر
+async function handleRegister() {
+  const nameInput = document.getElementById('userNameInput');
+  const phoneInput = document.getElementById('userPhoneInput');
+  const authError = document.getElementById('authError');
+
+  const name = nameInput ? nameInput.value.trim() : '';
+  const phone = phoneInput ? phoneInput.value.trim() : '';
+
+  if (!name || !phone) {
+    if (authError) {
+      authError.innerText = 'لطفاً نام و شماره تماس خود را وارد کنید.';
+      authError.classList.remove('hidden');
+    } else {
+      alert('لطفاً نام و شماره تماس خود را وارد کنید.');
     }
+    return;
+  }
 
-    const onboardingForm = document.getElementById("onboardingForm");
-    if (onboardingForm) {
-        onboardingForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = document.getElementById("userNameInput").value.trim();
-            const phone = document.getElementById("userPhoneInput").value.trim();
-            if (name && phone) {
-                currentUser = { name, phone };
-                localStorage.setItem("avaye_user", JSON.stringify(currentUser));
-                
-                try {
-                    await fetch("/api/register", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(currentUser)
-                    });
-                } catch (err) {
-                    console.error("خطا در ثبت‌نام ابری:", err);
-                }
-
-                document.getElementById("displayUserName").innerText = name;
-                document.getElementById("registrationModal").classList.add("hidden");
-                showToast("ورود با موفقیت انجام شد! خوش آمدید.");
-            }
-        });
-    }
-
-    const imageModeBtn = document.getElementById("imageModeBtn");
-    if (imageModeBtn) {
-        imageModeBtn.addEventListener("click", () => {
-            isImageModeActive = !isImageModeActive;
-            if (isImageModeActive) {
-                imageModeBtn.classList.remove("bg-amber-400/10", "text-amber-300");
-                imageModeBtn.classList.add("bg-amber-500", "text-slate-950", "shadow-lg", "shadow-amber-500/30", "scale-105");
-                showToast("حالت ساخت تصویر فعال شد. توصیف تصویر را بنویسید.");
-            } else {
-                imageModeBtn.classList.remove("bg-amber-500", "text-slate-950", "shadow-lg", "shadow-amber-500/30", "scale-105");
-                imageModeBtn.classList.add("bg-amber-400/10", "text-amber-300");
-                showToast("حالت گفتگو متنی فعال شد.");
-            }
-        });
-    }
-
-    const chatForm = document.getElementById("chatForm");
-    const chatInput = document.getElementById("chatInput");
-    if (chatForm && chatInput) {
-        chatForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            handleUserMessage();
-        });
-        chatInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleUserMessage();
-            }
-        });
-    }
-
-    document.getElementById("newChatBtn")?.addEventListener("click", () => {
-        document.getElementById("messagesArea").innerHTML = "";
-        document.getElementById("welcomeScreen").style.display = "flex";
-        showToast("گفتگوی جدید آماده شد.");
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone })
     });
 
-    const adminTrigger = document.getElementById("adminTriggerBtn");
-    if (adminTrigger) {
-        adminTrigger.addEventListener("click", () => {
-            const pass = prompt("لطفاً رمز عبور پنل مدیریت را وارد کنید:");
-            if (pass === null) return;
-            if (pass.trim() === (localStorage.getItem("avaye_admin_pass") || ADMIN_PASSCODE).trim()) {
-                window.location.href = "admin.html";
-            } else {
-                showToast("رمز عبور اشتباه است!");
-            }
-        });
-    }
-});
-
-async function checkImageGenStatus() {
-    try {
-        const res = await fetch("/api/config");
-        const data = await res.json();
-        const btn = document.getElementById("imageModeBtn");
-        if (btn && data.imageGenEnabled) {
-            btn.classList.remove("hidden");
-        }
-    } catch (e) {}
-}
-
-function sendSuggestion(text) {
-    const chatInput = document.getElementById("chatInput");
-    if (chatInput) {
-        chatInput.value = text;
-        handleUserMessage();
-    }
-}
-
-async function handleUserMessage() {
-    const chatInput = document.getElementById("chatInput");
-    const text = chatInput.value.trim();
-    if (!text) return;
-
-    const isImageMode = isImageModeActive;
-    chatInput.value = "";
-    document.getElementById("welcomeScreen").style.display = "none";
-    
-    appendMessage(text, "user");
-
-    const currentPass = localStorage.getItem("avaye_admin_pass") || ADMIN_PASSCODE;
-    if (text === currentPass || text === "Amidhjsos62627@_897") {
-        appendMessage("رمز مدیریت تأیید شد. در حال انتقال به پنل مدیریت...", "ai");
-        showToast("انتقال به پنل مدیریت...");
-        setTimeout(() => { window.location.href = "admin.html"; }, 1200);
-        return;
-    }
-
-    let aiBubble;
-    if (isImageMode) {
-        aiBubble = appendMessage("", "ai");
-        aiBubble.innerHTML = `
-            <div class="space-y-3 w-full max-w-[320px] sm:max-w-[380px]">
-                <p class="text-xs text-amber-300 font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-spinner animate-spin"></i>
-                    در حال خلق تصویر با هوش مصنوعی...
-                </p>
-                <div class="relative w-full aspect-square rounded-2xl bg-slate-800/80 border border-white/10 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
-                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
-                    <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400/50 animate-bounce mb-3"></i>
-                    <span class="text-xs text-slate-400 font-medium animate-pulse">لطفاً چند ثانیه شکیبا باشید...</span>
-                </div>
-            </div>
-        `;
+    if (res.ok) {
+      currentUser = { name, phone };
+      localStorage.setItem('avaye_user', JSON.stringify(currentUser));
+      if (authError) authError.classList.add('hidden');
+      showChatInterface();
     } else {
-        aiBubble = appendMessage("در حال پردازش و استعلام پاسخ معتبر...", "ai");
+      const data = await res.json();
+      if (authError) {
+        authError.innerText = data.error || 'خطا در ثبت‌نام!';
+        authError.classList.remove('hidden');
+      }
     }
-
-    try {
-        const res = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text, user: currentUser, isImageMode: isImageMode })
-        });
-        
-        if (!res.ok) {
-            throw new Error("خطا در پاسخ سرور");
-        }
-
-        const data = await res.json();
-
-        if (data.isImage && data.imageUrl) {
-            const imgId = "img_" + Math.random().toString(36).substring(2, 9);
-            
-            aiBubble.innerHTML = `
-                <div class="space-y-3 w-full max-w-[320px] sm:max-w-[380px]">
-                    <p class="text-xs text-amber-300 font-bold flex items-center gap-1.5">
-                        <i class="fa-solid fa-sparkles text-amber-400"></i>
-                        تصویر تولید شده با آوای یقین:
-                    </p>
-                    
-                    <div class="relative w-full aspect-square rounded-2xl bg-slate-900 border border-amber-500/20 overflow-hidden shadow-2xl group">
-                        <img id="${imgId}" src="${data.imageUrl}" alt="Generated AI Image" 
-                             class="w-full h-full object-cover rounded-2xl transition duration-500" 
-                             onload="document.getElementById('${imgId}_loader').style.display='none'"
-                             onerror="this.onerror=null; this.src='https://pollinations.ai/p/${encodeURIComponent(data.translatedPrompt)}?width=800&height=800';"/>
-                        
-                        <div id="${imgId}_loader" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-2 z-10">
-                            <i class="fa-solid fa-circle-notch animate-spin text-amber-400 text-2xl"></i>
-                            <span class="text-[11px] text-slate-400 font-medium">در حال دریافت عکس...</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-2 pt-1 bg-black/20 p-2.5 rounded-xl border border-white/5">
-                        <span class="text-[10px] text-slate-400 truncate max-w-[200px]" title="${data.translatedPrompt}">🔤 ${data.translatedPrompt}</span>
-                        <button onclick="downloadImage('${data.imageUrl}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-lg cursor-pointer">
-                            <i class="fa-solid fa-download text-xs"></i> دانلود
-                        </button>
-                    </div>
-                </div>
-            `;
-        } else {
-            aiBubble.innerText = data.reply || "پاسخی دریافت نشد.";
-        }
-    } catch (err) {
-        aiBubble.innerText = "خطا در ارتباط با سرور ابری. لطفاً اتصال خود را بررسی کنید.";
+  } catch (err) {
+    console.error('Registration Error:', err);
+    if (authError) {
+      authError.innerText = 'ارتباط با سرور برقرار نشد.';
+      authError.classList.remove('hidden');
     }
+  }
 }
 
-async function downloadImage(url) {
-    try {
-        showToast("در حال آماده‌سازی فایل دانلود...");
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = `avaye-yaghin-${Date.now()}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-        showToast("دانلود با موفقیت انجام شد!");
-    } catch (error) {
-        window.open(url, "_blank");
+// نمایش/مخفی‌سازی مدال ورود و چت
+function showAuthModal() {
+  const authModal = document.getElementById('authModal');
+  const chatContainer = document.getElementById('chatContainer');
+  if (authModal) authModal.classList.remove('hidden');
+  if (chatContainer) chatContainer.classList.add('hidden');
+}
+
+function showChatInterface() {
+  const authModal = document.getElementById('authModal');
+  const chatContainer = document.getElementById('chatContainer');
+  const userDisplayName = document.getElementById('userDisplayName');
+
+  if (authModal) authModal.classList.add('hidden');
+  if (chatContainer) chatContainer.classList.remove('hidden');
+  if (userDisplayName && currentUser) {
+    userDisplayName.innerText = `${currentUser.name} (${currentUser.phone})`;
+  }
+}
+
+// خروج کاربر
+function handleLogout() {
+  localStorage.removeItem('avaye_user');
+  currentUser = null;
+  location.reload();
+}
+
+// تغییر حالت بین گفتگو و تصویرسازی
+function toggleImageMode() {
+  isImageMode = !isImageMode;
+  const imgBtn = document.getElementById('imageModeToggle');
+  const messageInput = document.getElementById('messageInput');
+
+  if (isImageMode) {
+    if (imgBtn) imgBtn.classList.add('bg-amber-600', 'text-white');
+    if (messageInput) messageInput.placeholder = 'توصیف تصوری که می‌خواهی بسازم را بنویس... 🎨';
+  } else {
+    if (imgBtn) imgBtn.classList.remove('bg-amber-600', 'text-white');
+    if (messageInput) messageInput.placeholder = 'سوال دینی یا عمومی خود را بنویسید...';
+  }
+}
+
+// ارسال پیام به ربات
+async function sendMessage() {
+  const messageInput = document.getElementById('messageInput');
+  const chatBox = document.getElementById('chatMessages');
+
+  if (!messageInput || !chatBox) return;
+
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  // اضافه کردن پیام کاربر به صفحه
+  appendUserMessage(text);
+  messageInput.value = '';
+
+  // ساخت کادر پیش‌فرض برای پاسخ ربات
+  const botMessageEl = appendBotMessage('در حال پردازش و پاسخگویی... ⏳');
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        user: currentUser,
+        isImageMode: isImageMode
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      botMessageEl.innerHTML = `<p class="text-red-400">⚠️ ${data.error || 'خطایی رخ داده است.'}</p>`;
+      return;
     }
+
+    // حالت دریافت تصویر
+    if (data.isImage || data.imageUrl) {
+      botMessageEl.innerHTML = `
+        <p class="text-xs text-amber-300 font-medium mb-2">🎨 تصویر درخواستی شما ساخته شد:</p>
+        <div class="w-64 h-64 rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900 shadow-xl mb-2">
+          <img src="${data.imageUrl}" alt="AI Image" class="w-full h-full object-cover" />
+        </div>
+        <a href="${data.imageUrl}" target="_blank" class="inline-block text-xs text-amber-400 hover:underline">🔗 مشاهده و دانلود کیفیت اصلی</a>
+      `;
+    } else {
+      // حالت پاسخ متنی + دکمه خوانش صوتی
+      const replyText = data.reply || 'پاسخی دریافت نشد.';
+      botMessageEl.innerHTML = `
+        <p class="text-sm text-slate-100 leading-relaxed">${escapeHtml(replyText)}</p>
+        <button onclick="speakText(this, \`${escapeJsString(replyText)}\`)" class="text-xs text-amber-400 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 px-2.5 py-1 rounded-lg mt-3 inline-flex items-center gap-1.5 cursor-pointer transition">
+          <span>🔊</span> پخش صوتی
+        </button>
+      `;
+    }
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+  } catch (err) {
+    console.error('Chat Error:', err);
+    botMessageEl.innerHTML = `<p class="text-red-400">⚠️ خطای شبکه یا عدم ارتباط با سرور.</p>`;
+  }
 }
 
-function appendMessage(text, sender) {
-    const messagesArea = document.getElementById("messagesArea");
-    const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${sender}`;
-    const contentDiv = document.createElement("div");
-    contentDiv.className = "message-content";
-    contentDiv.innerText = text;
-    messageDiv.appendChild(contentDiv);
-    messagesArea.appendChild(messageDiv);
-    
-    const chatContainer = document.getElementById("chatContainer");
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    return contentDiv;
+// نمایش پیام کاربر در UI
+function appendUserMessage(text) {
+  const chatBox = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'flex justify-start mb-4';
+  div.innerHTML = `
+    <div class="bg-emerald-600/90 text-white p-3.5 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md">
+      ${escapeHtml(text)}
+    </div>
+  `;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function showToast(message) {
-    const container = document.getElementById("toastContainer");
-    if (!container) return;
-    const toast = document.createElement("div");
-    toast.className = "toast";
-    toast.innerText = message;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3200);
+// ساخت کادر پیام ربات در UI
+function appendBotMessage(initialText) {
+  const chatBox = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'flex justify-end mb-4';
+
+  const innerDiv = document.createElement('div');
+  innerDiv.className = 'bg-slate-800/90 border border-slate-700/60 text-slate-200 p-3.5 rounded-2xl rounded-tl-none max-w-[85%] text-sm shadow-md';
+  innerDiv.innerHTML = `<p class="text-slate-400 text-xs">${initialText}</p>`;
+
+  div.appendChild(innerDiv);
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  return innerDiv;
+}
+
+// تابع هوشمند پخش صوتی پاسخ‌ها (TTS)
+function speakText(buttonEl, text) {
+  if (currentAudio && !currentAudio.paused) {
+    currentAudio.pause();
+    currentAudio = null;
+    buttonEl.innerHTML = '<span>🔊</span> پخش صوتی';
+    return;
+  }
+
+  // حذف ایموجی‌ها برای خوانش بهتر گوینده
+  const cleanText = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+  if (!cleanText) return;
+
+  const encodedText = encodeURIComponent(cleanText.substring(0, 300));
+  const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodedText}&tl=fa&client=tw-ob`;
+
+  currentAudio = new Audio(ttsUrl);
+  currentAudio.playbackRate = parseFloat(botSettings.voiceSpeed || 1);
+
+  buttonEl.innerHTML = '<span>⏹️</span> متوقف کردن';
+
+  currentAudio.play().catch(err => {
+    console.error('Audio playback error:', err);
+    buttonEl.innerHTML = '<span>🔊</span> پخش صوتی';
+  });
+
+  currentAudio.onended = () => {
+    buttonEl.innerHTML = '<span>🔊</span> پخش صوتی';
+    currentAudio = null;
+  };
+}
+
+// توابع کمکی امنیتی برای متن‌ها
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, function(m) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[m];
+  });
+}
+
+function escapeJsString(str) {
+  return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
 }
