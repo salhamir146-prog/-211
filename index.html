@@ -212,16 +212,15 @@
                     <label class="block text-xs text-emerald-200 mb-1.5 font-medium">نام و نام خانوادگی</label>
                     <input type="text" id="userNameInput" required placeholder="مثال: علی احمدی" class="reg-input text-sm">
                 </div>
-                <div>
-                    <label class="block text-xs text-emerald-200 mb-1.5 font-medium">شماره همراه</label>
-                    <input type="tel" id="userPhoneInput" required placeholder="09123456789" dir="ltr" class="reg-input text-sm text-right">
-                </div>
-                <button type="submit" class="w-full py-4 mt-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-slate-950 font-black shadow-lg cursor-pointer transition">
-                    ورود به سامانه
-                </button>
-            </form>
-        </div>
-    </div>
+                <!-- کادرهای ورودی نام و شماره -->
+<input type="text" id="userNameInput" placeholder="نام و نام خانوادگی..." class="...">
+<input type="tel" id="userPhoneInput" placeholder="شماره تماس..." class="...">
+
+<!-- دکمه ورود -->
+<button onclick="handleRegister()" class="...">ورود به سامانه</button>
+
+<!-- پیام خطا (در صورت وجود) -->
+<p id="authError" class="text-red-500 text-xs mt-2 hidden"></p>
 
     <div class="app-container">
         <aside id="sidebar" class="sidebar">
