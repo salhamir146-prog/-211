@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل مدیریت جامع - آوای یقین</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Vazirmatn', sans-serif; }</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <!-- Modal Passcode -->
+  <div id="authModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-md w-full shadow-2xl">
+      <h2 class="text-xl font-bold mb-4 text-emerald-400 text-center">🔐 ورود به پنل مدیریت آوای یقین</h2>
+      <p class="text-xs text-slate-400 mb-4 text-center">لطفاً رمز عبور مدیریت را وارد کنید:</p>
+      <input type="password" id="passcodeInput" placeholder="رمز عبور..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl mb-4 text-sm focus:outline-none focus:border-emerald-500">
+      <button onclick="checkPasscode()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-xl font-bold transition text-sm cursor-pointer">تایید و ورود</button>
+      <p id="authError" class="text-red-500 text-xs mt-3 text-center hidden">رمز عبور اشتباه است!</p>
+    </div>
+  </div>
+
+  <!-- Main Admin Container -->
+  <div id="adminContainer" class="hidden max-w-7xl mx-auto p-4 md:p-8">
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-400">⚡ پنل مدیریت هوشمند سامانه</h1>
+        <p class="text-xs text-slate-400 mt-1">مدیریت کامل ربات، کاربران و گفتگوهای اختصاصی</p>
+      </div>
+      <button onclick="location.reload()" class="mt-4 md:mt-0 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-medium transition cursor-pointer">خروج / قفل مجدد</button>
+    </header>
+
+    <!-- آمار سریع -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
+        <p class="text-xs text-slate-400">کل کاربران ثبت‌نامی</p>
+        <h3 id="statUsers" class="text-2xl font-bold text-emerald-400 mt-2">0</h3>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
+        <p class="text-xs text-slate-400">کل گفتگوها و لاگ‌ها</p>
+        <h3 id="statLogs" class="text-2xl font-bold text-blue-400 mt-2">0</h3>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
+        <p class="text-xs text-slate-400">کاربران مسدود شده</p>
+        <h3 id="statBlocked" class="text-2xl font-bold text-red-400 mt-2">0</h3>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg">
+        <p class="text-xs text-slate-400">وضعیت ربات</p>
+        <h3 id="statStatus" class="text-xl font-bold text-emerald-400 mt-2">فعال</h3>
+      </div>
+    </div>
+
+    <!-- تب‌ها -->
+    <div class="flex gap-2 mb-6 border-b border-slate-800 pb-3 overflow-x-auto">
+      <button onclick="switchTab('settings')" id="btn-settings" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition cursor-pointer">تنظیمات و هوش مصنوعی</button>
+      <button onclick="switchTab('users')" id="btn-users" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">لیست کاربران</button>
+      <button onclick="switchTab('logs')" id="btn-logs" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">تاریخچه گفتگوها</button>
+      <button onclick="switchTab('tools')" id="btn-tools" class="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer">ابزارها و اطلاعیه</button>
+    </div>
+
+    <!-- تب تنظیمات -->
+    <div id="tab-settings" class="tab-content bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+      <h2 class="text-lg font-bold mb-4 text-emerald-400">⚙️ تنظیمات شخصیت و رفتار هوش مصنوعی</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">شخصیت و دستورات سیستمی (System Prompt):</label>
+          <textarea id="systemPrompt" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">یادداشت‌ها و نکات مدیریت مسجد:</label>
+          <textarea id="adminNotes" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+
+        <!-- بخش انتخاب مدل هوش مصنوعی (گروگ + اوپن‌روتر) -->
+        <div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب ارائه دهنده و مدل هوش مصنوعی:</label>
+          <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+            <optgroup label="⚡ سرویس Groq API (بسیار سریع - کلید جدید)">
+              <option value="groq/llama-3.3-70b-versatile">Groq: Llama 3.3 70B (پیش‌فرض - بسیار قدرتمند)</option>
+              <option value="groq/llama-3.1-8b-instant">Groq: Llama 3.1 8B (سریع‌ترین مدل)</option>
+              <option value="groq/mixtral-8x7b-32768">Groq: Mixtral 8x7B</option>
+            </optgroup>
+            
+            <optgroup label="🌐 سرویس OpenRouter API (کلید قبلی)">
+              <option value="openai/gpt-oss-20b">GPT-OSS 20B (رایگان)</option>
+              <option value="google/gemini-2.0-flash-001">Gemini 3.1 Flash</option>
+              <option value="meta-llama/llama-3-70b-instruct">Llama 3 70B Instruct</option>
+              <option value="google/gemini-nano">Gemini Nano</option>
+              <option value="mistralai/mistral-7b-instruct">Mistral 7B</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">پیام خوش‌آمدگویی:</label>
+          <input type="text" id="welcomeMsg" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">درجه خلاقیت (Temperature):</label>
+          <input type="number" step="0.1" min="0.1" max="1" id="temperature" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">حداکثر طول پاسخ (Max Tokens):</label>
+          <input type="number" id="maxTokens" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+        </div>
+      </div>
+
+      <!-- گزینه فعال‌سازی ربات -->
+      <div class="mt-6 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+        <input type="checkbox" id="botActive" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+        <label for="botActive" class="text-sm font-medium cursor-pointer">فعال بودن ربات پاسخگو</label>
+      </div>
+
+      <!-- گزینه فعال‌سازی هوش مصنوعی تصویرساز -->
+      <div class="mt-3 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+        <input type="checkbox" id="imageGenEnabled" class="w-5 h-5 accent-amber-500 rounded cursor-pointer">
+        <label for="imageGenEnabled" class="text-sm font-medium cursor-pointer text-amber-300">🎨 فعال‌سازی هوش مصنوعی تصویرساز برای کاربران</label>
+      </div>
+
+      <button onclick="saveSettings()" class="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl font-bold text-sm transition shadow-lg cursor-pointer">ذخیره تغییرات در فضای ابری</button>
+    </div>
+
+    <!-- تب کاربران -->
+    <div id="tab-users" class="tab-content hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+      <h2 class="text-lg font-bold mb-4 text-emerald-400">👥 لیست کاربران (جهت مشاهده چت اختصاصی روی هر کاربر کلیک کنید)</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-slate-800 text-slate-400 text-xs uppercase">
+            <tr>
+              <th class="p-3 rounded-r-xl">نام کاربر</th>
+              <th class="p-3">شماره تماس</th>
+              <th class="p-3">زمان ثبت‌نام</th>
+              <th class="p-3 rounded-l-xl">عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-slate-800"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- تب لاگ‌ها -->
+    <div id="tab-logs" class="tab-content hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="logsTitle" class="text-lg font-bold text-emerald-400">📜 تاریخچه تمام گفتگوها</h2>
+        <button onclick="resetLogsFilter()" id="resetFilterBtn" class="hidden bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold text-amber-400 transition cursor-pointer">نمایش همه گفتگوها</button>
+      </div>
+      <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2" id="logsContainer"></div>
+    </div>
+
+    <!-- تب ابزارها -->
+    <div id="tab-tools" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+        <h3 class="text-md font-bold mb-3 text-emerald-400">📢 ارسال اطلاعیه همگانی</h3>
+        <textarea id="broadcastText" rows="4" placeholder="متن اطلاعیه..." class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm mb-3 focus:outline-none focus:border-emerald-500"></textarea>
+        <button onclick="sendBroadcast()" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">ارسال اطلاعیه</button>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+        <h3 class="text-md font-bold mb-3 text-red-400">🗑️ مدیریت و پاکسازی دیتابیس</h3>
+        <p class="text-xs text-slate-400 mb-4">پاکسازی کل تاریخچه چت‌های ذخیره شده در حافظه ابری.</p>
+        <button onclick="clearAllLogs()" class="bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer">پاکسازی کامل تاریخچه</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const MASTER_PASS = "Amidhjsos62627@_897";
+    let globalData = {};
+
+    function checkPasscode() {
+      const val = document.getElementById('passcodeInput').value;
+      if (val === MASTER_PASS) {
+        document.getElementById('authModal').classList.add('hidden');
+        document.getElementById('adminContainer').classList.remove('hidden');
+        loadAdminData();
+      } else {
+        document.getElementById('authError').classList.remove('hidden');
+      }
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="btn-"]').forEach(el => {
+        el.className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-900 text-slate-400 hover:text-white transition cursor-pointer";
+      });
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      document.getElementById(`btn-${tabName}`).className = "px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white transition cursor-pointer";
+    }
+
+    async function loadAdminData() {
+      try {
+        const res = await fetch('/api/admin/data');
+        globalData = await res.json();
+
+        document.getElementById('statUsers').innerText = globalData.users?.length || 0;
+        document.getElementById('statLogs').innerText = globalData.logs?.length || 0;
+        document.getElementById('statBlocked').innerText = globalData.blocked?.length || 0;
+        document.getElementById('statStatus').innerText = globalData.settings?.botActive ? "فعال" : "غیرفعال";
+
+        if (globalData.settings) {
+          document.getElementById('systemPrompt').value = globalData.settings.systemPrompt || '';
+          document.getElementById('adminNotes').value = globalData.settings.adminNotes || '';
+          document.getElementById('aiModel').value = globalData.settings.model || 'groq/llama-3.3-70b-versatile';
+          document.getElementById('welcomeMsg').value = globalData.settings.welcomeMsg || '';
+          document.getElementById('temperature').value = globalData.settings.temperature ?? 0.7;
+          document.getElementById('maxTokens').value = globalData.settings.maxTokens ?? 1024;
+          document.getElementById('botActive').checked = globalData.settings.botActive ?? true;
+          document.getElementById('imageGenEnabled').checked = globalData.settings.imageGenEnabled ?? false;
+        }
+
+        renderUsers(globalData.users);
+        renderLogs(globalData.logs);
+      } catch (err) { console.error(err); }
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '';
+      if (users && users.length > 0) {
+        users.forEach(u => {
+          const isBlocked = globalData.blocked?.includes(u.phone);
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-800/50 cursor-pointer">
+              <td class="p-3 font-medium text-emerald-300" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.name} 🔍</td>
+              <td class="p-3 text-slate-400" onclick="viewUserChats('${u.phone}', '${u.name}')">${u.phone}</td>
+              <td class="p-3 text-slate-400 text-xs">${u.time}</td>
+              <td class="p-3 flex gap-2">
+                <button onclick="viewUserChats('${u.phone}', '${u.name}')" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer">مشاهده چت‌ها</button>
+                <button onclick="toggleBlock('${u.phone}')" class="px-3 py-1 rounded-lg text-xs font-bold ${isBlocked ? 'bg-emerald-600' : 'bg-red-600'} transition cursor-pointer">${isBlocked ? 'آزاد' : 'مسدود'}</button>
+              </td>
+            </tr>`;
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">کاربری ثبت‌نام نکرده است.</td></tr>`;
+      }
+    }
+
+    function renderLogs(logs, filterPhone = null) {
+      const logsDiv = document.getElementById('logsContainer');
+      logsDiv.innerHTML = '';
+      
+      let filteredLogs = logs;
+      if (filterPhone) {
+        filteredLogs = logs.filter(l => l.userPhone === filterPhone);
+        document.getElementById('logsTitle').innerText = `📜 گفتگوهای اختصاصی کاربر`;
+        document.getElementById('resetFilterBtn').classList.remove('hidden');
+      } else {
+        document.getElementById('logsTitle').innerText = `📜 تاریخچه تمام گفتگوها`;
+        document.getElementById('resetFilterBtn').classList.add('hidden');
+      }
+
+      if (filteredLogs && filteredLogs.length > 0) {
+        filteredLogs.forEach(l => {
+          let replyContent = '';
+          if (l.isImage || (l.reply && l.reply.startsWith('http'))) {
+            replyContent = `
+              <div class="mt-2 space-y-2">
+                <div class="w-48 h-48 rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900 shadow-lg">
+                  <img src="${l.reply}" alt="Generated AI Image" class="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <a href="${l.reply}" target="_blank" class="inline-block text-xs text-amber-400 hover:underline">🔗 مشاهده و دانلود تصویر کیفیت اصلی</a>
+              </div>
+            `;
+          } else {
+            replyContent = `<p class="text-sm text-slate-300 bg-slate-900/60 p-3 rounded-lg mt-1">پاسخ ربات: ${l.reply}</p>`;
+          }
+
+          logsDiv.innerHTML += `
+            <div class="bg-slate-800/60 border border-slate-700/50 p-4 rounded-xl mb-3">
+              <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+                <span>👤 ${l.userName} (${l.userPhone})</span>
+                <span>⏰ ${l.time}</span>
+              </div>
+              <p class="text-sm font-bold text-emerald-300">پرسش: ${l.question}</p>
+              ${replyContent}
+            </div>`;
+        });
+      } else {
+        logsDiv.innerHTML = `<p class="text-center text-slate-500 py-6">هیچ گفتگویی برای این کاربر یافت نشد.</p>`;
+      }
+    }
+
+    function viewUserChats(phone, name) {
+      switchTab('logs');
+      renderLogs(globalData.logs, phone);
+    }
+
+    function resetLogsFilter() {
+      renderLogs(globalData.logs, null);
+    }
+
+    async function saveSettings() {
+      const data = {
+        systemPrompt: document.getElementById('systemPrompt').value,
+        adminNotes: document.getElementById('adminNotes').value,
+        model: document.getElementById('aiModel').value,
+        welcomeMsg: document.getElementById('welcomeMsg').value,
+        temperature: parseFloat(document.getElementById('temperature').value),
+        maxTokens: parseInt(document.getElementById('maxTokens').value),
+        botActive: document.getElementById('botActive').checked,
+        imageGenEnabled: document.getElementById('imageGenEnabled').checked
+      };
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) alert('تنظیمات با موفقیت ذخیره شد!');
+    }
+
+    async function toggleBlock(phone) {
+      await fetch('/api/admin/block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone })
+      });
+      loadAdminData();
+    }
+
+    async function sendBroadcast() {
+      const message = document.getElementById('broadcastText').value;
+      if (!message) return alert('متن خالی است.');
+      await fetch('/api/admin/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      alert('اطلاعیه ثبت شد!');
+      document.getElementById('broadcastText').value = '';
+    }
+
+    async function clearAllLogs() {
+      if (!confirm('آیا از پاکسازی کامل تاریخچه مطمئن هستید؟')) return;
+      await fetch('/api/admin/clear-logs', { method: 'POST' });
+      loadAdminData();
+    }
+  </script>
+</body>
+</html>
