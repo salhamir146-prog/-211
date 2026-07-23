@@ -2,6 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const ADMIN_PASSWORD = "AhuiaJAKXJMPLDKS1221141154F..";
 
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
@@ -183,7 +184,7 @@ export default {
           });
 
           const openRouterData = await openRouterRes.json();
-          if (!openRouterData.ok) {
+          if (openRouterData.error) {
             return new Response(JSON.stringify({ error: openRouterData.error?.message || "خطا در ارتباط با OpenRouter" }), { status: 500, headers: corsHeaders });
           }
           reply = openRouterData.choices?.[0]?.message?.content || "پاسخی از سرور دریافت نشد.";
@@ -207,8 +208,13 @@ export default {
         return new Response(JSON.stringify({ reply }), { headers: corsHeaders });
       }
 
-      // ۴. دریافت اطلاعات پنل ادمین
-      if (path === "/api/admin/data" && request.method === "GET") {
+      // ۴. دریافت اطلاعات پنل ادمین (با چک کردن رمز)
+      if (path === "/api/admin/data" && request.method === "POST") {
+        const { password } = await request.json();
+        if (password !== ADMIN_PASSWORD) {
+          return new Response(JSON.stringify({ error: "رمز عبور مدیریت اشتباه است!" }), { status: 401, headers: corsHeaders });
+        }
+
         let users = [], logs = [], blocked = [], settings = {};
         try {
           users = JSON.parse(await env.AVAYE_YAGHIN_KV.get("users") || "[]");
@@ -216,19 +222,27 @@ export default {
           blocked = JSON.parse(await env.AVAYE_YAGHIN_KV.get("blocked") || "[]");
           settings = JSON.parse(await env.AVAYE_YAGHIN_KV.get("settings") || "{}");
         } catch (e) {}
-        return new Response(JSON.stringify({ users, logs, blocked, settings }), { headers: corsHeaders });
+        return new Response(JSON.stringify({ success: true, users, logs, blocked, settings }), { headers: corsHeaders });
       }
 
       // ۵. ذخیره تنظیمات ادمین
       if (path === "/api/admin/settings" && request.method === "POST") {
-        const data = await request.json();
-        await env.AVAYE_YAGHIN_KV.put("settings", JSON.stringify(data));
+        const { password, ...settingsData } = await request.json();
+        if (password !== ADMIN_PASSWORD) {
+          return new Response(JSON.stringify({ error: "دسترسی غیرمجاز!" }), { status: 401, headers: corsHeaders });
+        }
+
+        await env.AVAYE_YAGHIN_KV.put("settings", JSON.stringify(settingsData));
         return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
       }
 
       // ۶. مسدود / فعال‌سازی کاربر
       if (path === "/api/admin/block" && request.method === "POST") {
-        const { phone } = await request.json();
+        const { password, phone } = await request.json();
+        if (password !== ADMIN_PASSWORD) {
+          return new Response(JSON.stringify({ error: "دسترسی غیرمجاز!" }), { status: 401, headers: corsHeaders });
+        }
+
         let blocked = JSON.parse(await env.AVAYE_YAGHIN_KV.get("blocked") || "[]");
         if (blocked.includes(phone)) {
           blocked = blocked.filter(p => p !== phone);
@@ -241,6 +255,11 @@ export default {
 
       // ۷. پاکسازی لاگ‌ها
       if (path === "/api/admin/clear-logs" && request.method === "POST") {
+        const { password } = await request.json();
+        if (password !== ADMIN_PASSWORD) {
+          return new Response(JSON.stringify({ error: "دسترسی غیرمجاز!" }), { status: 401, headers: corsHeaders });
+        }
+
         await env.AVAYE_YAGHIN_KV.put("chat_logs", JSON.stringify([]));
         return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
       }
