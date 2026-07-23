@@ -32,7 +32,7 @@ export default {
         return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
       }
 
-      // ۲. دریافت تنظیمات همگانی (شامل وضعیت تصویرساز برای فرانت‌اند)
+      // ۲. دریافت تنظیمات همگانی
       if (path === "/api/config" && request.method === "GET") {
         let settings = {};
         try {
@@ -43,7 +43,7 @@ export default {
         }), { headers: corsHeaders });
       }
 
-      // ۳. ارسال پیام و ارتباط با OpenRouter API
+      // ۳. ارسال پیام و ارتباط با OpenRouter / Pollinations
       if (path === "/api/chat" && request.method === "POST") {
         const { message, user, isImageMode } = await request.json();
 
@@ -63,7 +63,7 @@ export default {
           settings = JSON.parse(await env.AVAYE_YAGHIN_KV.get("settings") || "{}");
         } catch (e) {}
 
-        // اگر حالت تصویرساز فعال است، ابتدا پرامپت به انگلیسی ترجمه می‌شود
+        // اگر حالت تصویرساز فعال است
         if (isImageMode) {
           if (!settings.imageGenEnabled) {
             return new Response(JSON.stringify({ error: "قابلیت تصویرسازی توسط مدیریت غیرفعال شده است." }), { status: 403, headers: corsHeaders });
@@ -78,7 +78,7 @@ export default {
             body: JSON.stringify({
               model: "openai/gpt-oss-20b",
               messages: [
-                { role: "system", content: "You are a prompt translator. Translate the user's description into a detailed English image generation prompt. Output ONLY the English translation, without extra text or quotes." },
+                { role: "system", content: "You are an image prompt generator. Translate the user prompt to English and provide a clear descriptive prompt. Output ONLY the English prompt without any extra explanation or quotes." },
                 { role: "user", content: message }
               ],
               temperature: 0.3
@@ -86,8 +86,11 @@ export default {
           });
 
           const translateData = await translateRes.json();
-          const translatedPrompt = translateData.choices?.[0]?.message?.content?.trim() || message;
-          const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(translatedPrompt)}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
+          let translatedPrompt = translateData.choices?.[0]?.message?.content?.trim() || message;
+          translatedPrompt = translatedPrompt.replace(/[^a-zA-Z0-9 ,.-]/g, '');
+
+          const randomSeed = Math.floor(Math.random() * 999999);
+          const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(translatedPrompt)}?width=1024&height=1024&seed=${randomSeed}&nologo=true&model=flux`;
 
           return new Response(JSON.stringify({ 
             isImage: true, 
