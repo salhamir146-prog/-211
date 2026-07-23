@@ -70,16 +70,18 @@
         <div>
           <label class="block text-xs font-medium mb-2 text-slate-300">یادداشت‌ها و نکات مدیریت مسجد:</label>
           <textarea id="adminNotes" rows="5" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
         <div>
-  <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب مدل هوش مصنوعی:</label>
-  <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
-    <option value="openai/gpt-oss-20b">GPT-OSS 20B (رایگان)</option>
-    <option value="google/gemini-2.0-flash-001">Gemini 3.1 Flash (۳۱۴)</option>
-    <option value="meta-llama/llama-3-70b-instruct">Llama 3 (لاگونا / لاما)</option>
-    <option value="google/gemini-nano">Gemini Nano (مای نانو)</option>
-    <option value="mistralai/mistral-7b-instruct">Mistral 2 Lite (موز ۲ لایت)</option>
-  </select>
-</div>
+          <label class="block text-xs font-medium mb-2 text-slate-300">انتخاب مدل هوش مصنوعی:</label>
+          <select id="aiModel" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
+            <option value="openai/gpt-oss-20b">GPT-OSS 20B (رایگان)</option>
+            <option value="google/gemini-2.0-flash-001">Gemini 3.1 Flash (۳۱۴)</option>
+            <option value="meta-llama/llama-3-70b-instruct">Llama 3 (لاگونا / لاما)</option>
+            <option value="google/gemini-nano">Gemini Nano (مای نانو)</option>
+            <option value="mistralai/mistral-7b-instruct">Mistral 2 Lite (موز ۲ لایت)</option>
+          </select>
+        </div>
+        <div>
           <label class="block text-xs font-medium mb-2 text-slate-300">پیام خوش‌آمدگویی:</label>
           <input type="text" id="welcomeMsg" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
         </div>
@@ -92,11 +94,20 @@
           <input type="number" id="maxTokens" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-emerald-500">
         </div>
       </div>
+
+      <!-- گزینه فعال‌سازی ربات -->
       <div class="mt-6 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-        <input type="checkbox" id="botActive" class="w-5 h-5 accent-emerald-500 rounded">
-        <label class="text-sm font-medium cursor-pointer">فعال بودن ربات پاسخگو</label>
+        <input type="checkbox" id="botActive" class="w-5 h-5 accent-emerald-500 rounded cursor-pointer">
+        <label for="botActive" class="text-sm font-medium cursor-pointer">فعال بودن ربات پاسخگو</label>
       </div>
-      <button onclick="saveSettings()" class="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl font-bold text-sm transition shadow-lg">ذخیره تغییرات در فضای ابری</button>
+
+      <!-- گزینه جدید: فعال‌سازی هوش مصنوعی تصویرساز -->
+      <div class="mt-3 flex items-center gap-3 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+        <input type="checkbox" id="imageGenEnabled" class="w-5 h-5 accent-amber-500 rounded cursor-pointer">
+        <label for="imageGenEnabled" class="text-sm font-medium cursor-pointer text-amber-300">🎨 فعال‌سازی هوش مصنوعی تصویرساز برای کاربران</label>
+      </div>
+
+      <button onclick="saveSettings()" class="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl font-bold text-sm transition shadow-lg cursor-pointer">ذخیره تغییرات در فضای ابری</button>
     </div>
 
     <!-- تب کاربران -->
@@ -117,7 +128,7 @@
       </div>
     </div>
 
-    <!-- تب لاگ‌ها و گفتگوهای اختصاصی -->
+    <!-- تب لاگ‌ها -->
     <div id="tab-logs" class="tab-content hidden bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
       <div class="flex justify-between items-center mb-4">
         <h2 id="logsTitle" class="text-lg font-bold text-emerald-400">📜 تاریخچه تمام گفتگوها</h2>
@@ -179,11 +190,13 @@
         if (globalData.settings) {
           document.getElementById('systemPrompt').value = globalData.settings.systemPrompt || '';
           document.getElementById('adminNotes').value = globalData.settings.adminNotes || '';
-          document.getElementById('aiModel').value = globalData.settings.model || 'llama-3.3-70b-versatile';
+          document.getElementById('aiModel').value = globalData.settings.model || 'openai/gpt-oss-20b';
           document.getElementById('welcomeMsg').value = globalData.settings.welcomeMsg || '';
           document.getElementById('temperature').value = globalData.settings.temperature ?? 0.7;
           document.getElementById('maxTokens').value = globalData.settings.maxTokens ?? 1024;
           document.getElementById('botActive').checked = globalData.settings.botActive ?? true;
+          // لود کردن وضعیت تیک تصویرساز
+          document.getElementById('imageGenEnabled').checked = globalData.settings.imageGenEnabled ?? false;
         }
 
         renderUsers(globalData.users);
@@ -261,14 +274,16 @@
         welcomeMsg: document.getElementById('welcomeMsg').value,
         temperature: parseFloat(document.getElementById('temperature').value),
         maxTokens: parseInt(document.getElementById('maxTokens').value),
-        botActive: document.getElementById('botActive').checked
+        botActive: document.getElementById('botActive').checked,
+        // ذخیره وضعیت تیک تصویرساز
+        imageGenEnabled: document.getElementById('imageGenEnabled').checked
       };
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (res.ok) alert('تنظیمات ذخیره شد!');
+      if (res.ok) alert('تنظیمات با موفقیت ذخیره شد!');
     }
 
     async function toggleBlock(phone) {
@@ -293,7 +308,7 @@
     }
 
     async function clearAllLogs() {
-      if (!confirm('پاک شود؟')) return;
+      if (!confirm('آیا از پاکسازی کامل تاریخچه مطمئن هستید؟')) return;
       await fetch('/api/admin/clear-logs', { method: 'POST' });
       loadAdminData();
     }
