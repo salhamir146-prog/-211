@@ -241,14 +241,28 @@
 
       if (filteredLogs && filteredLogs.length > 0) {
         filteredLogs.forEach(l => {
+          let replyContent = '';
+          if (l.isImage || (l.reply && l.reply.startsWith('http'))) {
+            replyContent = `
+              <div class="mt-2 space-y-2">
+                <div class="w-48 h-48 rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900 shadow-lg">
+                  <img src="${l.reply}" alt="Generated AI Image" class="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <a href="${l.reply}" target="_blank" class="inline-block text-xs text-amber-400 hover:underline">🔗 مشاهده و دانلود تصویر کیفیت اصلی</a>
+              </div>
+            `;
+          } else {
+            replyContent = `<p class="text-sm text-slate-300 bg-slate-900/60 p-3 rounded-lg mt-1">پاسخ ربات: ${l.reply}</p>`;
+          }
+
           logsDiv.innerHTML += `
-            <div class="bg-slate-800/60 border border-slate-700/50 p-4 rounded-xl">
+            <div class="bg-slate-800/60 border border-slate-700/50 p-4 rounded-xl mb-3">
               <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
                 <span>👤 ${l.userName} (${l.userPhone})</span>
                 <span>⏰ ${l.time}</span>
               </div>
-              <p class="text-sm font-bold text-emerald-300 mb-1">پرسش: ${l.question}</p>
-              <p class="text-sm text-slate-300 bg-slate-900/60 p-3 rounded-lg">پاسخ ربات: ${l.reply}</p>
+              <p class="text-sm font-bold text-emerald-300">پرسش: ${l.question}</p>
+              ${replyContent}
             </div>`;
         });
       } else {
