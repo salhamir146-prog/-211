@@ -14,17 +14,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // استعلام فعال بودن قابلیت تصویرساز از سرور
     checkImageGenStatus();
 
-    // سایدبار موبایل
     const menuToggle = document.getElementById("menuToggle");
     const sidebar = document.getElementById("sidebar");
     if (menuToggle && sidebar) {
         menuToggle.addEventListener("click", () => sidebar.classList.toggle("active"));
     }
 
-    // فرم ثبت‌نام
     const onboardingForm = document.getElementById("onboardingForm");
     if (onboardingForm) {
         onboardingForm.addEventListener("submit", async (e) => {
@@ -52,7 +49,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // دکمه تغییر حالت ساخت تصویر
     const imageModeBtn = document.getElementById("imageModeBtn");
     if (imageModeBtn) {
         imageModeBtn.addEventListener("click", () => {
@@ -69,7 +65,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // ارسال پیام چت
     const chatForm = document.getElementById("chatForm");
     const chatInput = document.getElementById("chatInput");
     if (chatForm && chatInput) {
@@ -85,14 +80,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // دکمه گفتگوی جدید
     document.getElementById("newChatBtn")?.addEventListener("click", () => {
         document.getElementById("messagesArea").innerHTML = "";
         document.getElementById("welcomeScreen").style.display = "flex";
         showToast("گفتگوی جدید آماده شد.");
     });
 
-    // دکمه ورود به پنل مدیریت
     const adminTrigger = document.getElementById("adminTriggerBtn");
     if (adminTrigger) {
         adminTrigger.addEventListener("click", () => {
@@ -137,7 +130,6 @@ async function handleUserMessage() {
     
     appendMessage(text, "user");
 
-    // بررسی رمز ادمین
     const currentPass = localStorage.getItem("avaye_admin_pass") || ADMIN_PASSCODE;
     if (text === currentPass || text === "Amidhjsos62627@_897") {
         appendMessage("رمز مدیریت تأیید شد. در حال انتقال به پنل مدیریت...", "ai");
@@ -146,7 +138,6 @@ async function handleUserMessage() {
         return;
     }
 
-    // اگر حالت تصویرساز بود، ابتدا کادر مربعی چت‌جی‌پاتی جای‌گذاری می‌شود
     let aiBubble;
     if (isImageMode) {
         aiBubble = appendMessage("", "ai");
@@ -156,8 +147,7 @@ async function handleUserMessage() {
                     <i class="fa-solid fa-spinner animate-spin"></i>
                     در حال خلق تصویر با هوش مصنوعی...
                 </p>
-                <!-- کادر مربعی با افکت لودینگ چت‌جی‌پاتی -->
-                <div id="imgPlaceholder" class="relative w-full aspect-square rounded-2xl bg-slate-800/80 border border-white/10 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
+                <div class="relative w-full aspect-square rounded-2xl bg-slate-800/80 border border-white/10 overflow-hidden flex flex-col items-center justify-center shadow-2xl">
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
                     <i class="fa-solid fa-wand-magic-sparkles text-4xl text-amber-400/50 animate-bounce mb-3"></i>
                     <span class="text-xs text-slate-400 font-medium animate-pulse">لطفاً چند ثانیه شکیبا باشید...</span>
@@ -184,7 +174,6 @@ async function handleUserMessage() {
         if (data.isImage && data.imageUrl) {
             const imgId = "img_" + Math.random().toString(36).substring(2, 9);
             
-            // جایگزینی کادر لودینگ مربعی با تصویر اصلی
             aiBubble.innerHTML = `
                 <div class="space-y-3 w-full max-w-[320px] sm:max-w-[380px]">
                     <p class="text-xs text-amber-300 font-bold flex items-center gap-1.5">
@@ -192,17 +181,15 @@ async function handleUserMessage() {
                         تصویر تولید شده با آوای یقین:
                     </p>
                     
-                    <!-- کادر مربعی چت‌جی‌پاتی برای تصویر -->
                     <div class="relative w-full aspect-square rounded-2xl bg-slate-900 border border-amber-500/20 overflow-hidden shadow-2xl group">
-                        <!-- تصویر واقعی -->
-                        <img id="${imgId}" src="${data.imageUrl}" alt="Generated AI Image" class="w-full h-full object-cover rounded-2xl transition duration-500 hover:scale-105" 
+                        <img id="${imgId}" src="${data.imageUrl}" alt="Generated AI Image" 
+                             class="w-full h-full object-cover rounded-2xl transition duration-500" 
                              onload="document.getElementById('${imgId}_loader').style.display='none'"
-                             onerror="this.src='https://via.placeholder.com/512?text=Error+Loading+Image'"/>
+                             onerror="this.onerror=null; this.src='https://pollinations.ai/p/${encodeURIComponent(data.translatedPrompt)}?width=800&height=800';"/>
                         
-                        <!-- انیمیشن لودینگ روی خود عکس تا زمان لود کامل مرورگر -->
-                        <div id="${imgId}_loader" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-2">
+                        <div id="${imgId}_loader" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center gap-2 z-10">
                             <i class="fa-solid fa-circle-notch animate-spin text-amber-400 text-2xl"></i>
-                            <span class="text-[11px] text-slate-400">در حال دریافت پیکسل‌ها...</span>
+                            <span class="text-[11px] text-slate-400 font-medium">در حال دریافت عکس...</span>
                         </div>
                     </div>
 
@@ -222,7 +209,6 @@ async function handleUserMessage() {
     }
 }
 
-// تابع اختصاصی دانلود تصویر بدون مشکل CORS
 async function downloadImage(url) {
     try {
         showToast("در حال آماده‌سازی فایل دانلود...");
